@@ -1,0 +1,1135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>조립팀 인사평가</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f4f6f8; --card:#fff; --line:#dfe3e6; --line2:#c9cfd4; --text:#1f2933; --sub:#5f6b76;
+  --blue:#1f6fb2; --blue-l:#e7f0f9; --orange:#d1662b; --green:#2e7d32; --green-l:#e8f5e9;
+  --yellow:#fff4c2; --red:#c62828; --red-l:#fdecea; --gray-l:#f2f2f2; --head:#e2efda;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 "Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer;border:1px solid var(--line2);background:#fff;border-radius:6px;padding:6px 12px}
+button:hover{background:#f7f9fa}
+button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+button.primary:hover{background:#185c95}
+button.green{background:var(--green);border-color:var(--green);color:#fff}
+button.danger{color:var(--red);border-color:#e3b1b1}
+button.small{padding:3px 8px;font-size:12px}
+button:disabled{opacity:.45;cursor:not-allowed}
+input[type=text],input[type=password],input[type=number],select,textarea{border:1px solid var(--line2);border-radius:6px;padding:6px 8px;background:#fff;width:100%}
+textarea{resize:vertical;min-height:54px}
+.wrap{max-width:1500px;margin:0 auto;padding:12px 16px 40px}
+.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+.top h1{font-size:17px;margin:0 8px 0 0}
+.top .sp{flex:1}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tabs button{border:none;background:none;padding:7px 12px;border-radius:6px;color:var(--sub)}
+.tabs button.on{background:var(--blue-l);color:var(--blue);font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+.card h2{font-size:15px;margin:0 0 10px}
+.card h3{font-size:14px;margin:14px 0 8px}
+.muted{color:var(--sub);font-size:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grid-eval{display:grid;grid-template-columns:410px minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:1150px){.grid-eval{grid-template-columns:1fr}}
+@media (max-width:760px){.grid-eval{grid-template-columns:1fr}}
+.plist{max-height:calc(100vh - 150px);overflow:auto;padding:6px}
+.pitem{display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:6px;cursor:pointer;border:1px solid transparent}
+.pitem:hover{background:#f5f7f9}
+.pitem.on{background:var(--blue-l);border-color:#b9d3ec}
+.pitem .nm{flex:1;font-weight:600}
+.badge{font-size:11px;padding:1px 7px;border-radius:10px;background:#eceff1;color:var(--sub);white-space:nowrap}
+.badge.done{background:var(--green-l);color:var(--green)}
+.badge.draft{background:#fff3e0;color:#b25c00}
+.badge.lead{background:#ede7f6;color:#5e35b1}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:middle}
+th{background:var(--gray-l);font-weight:700;font-size:13px}
+.score td{font-size:13px}
+.score input{width:74px;text-align:center;font-weight:700}
+.score .ref{white-space:nowrap}
+.score .ref b{color:var(--blue);font-size:15px}
+.score .why{color:var(--sub);font-size:12px}
+.score tr.diff td{background:#fff8e1}
+.score tr.diff input{border-color:#e0a000;background:#fffbe9}
+.total{display:flex;justify-content:flex-end;align-items:center;gap:14px;margin-top:10px;font-size:15px}
+.total b{font-size:22px;color:var(--blue)}
+.kv{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.kv div{display:flex;justify-content:space-between;padding:6px 10px;border-bottom:1px solid var(--line);font-size:13px}
+.kv div:nth-child(odd){border-right:1px solid var(--line)}
+.kv span:first-child{color:var(--sub)}
+.kv span:last-child{font-weight:700}
+.sect{font-size:12px;font-weight:700;color:var(--sub);margin:12px 0 6px}
+.banner{padding:9px 12px;border-radius:8px;margin-bottom:10px;font-size:13px}
+.banner.lock{background:var(--red-l);color:var(--red)}
+.banner.info{background:var(--blue-l);color:#174e7c}
+.banner.warn{background:#fff3e0;color:#8a4b00}
+.fields{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.fields label{font-size:12px;color:var(--sub);display:block;margin-bottom:3px}
+.fields .ro{padding:6px 8px;background:var(--gray-l);border-radius:6px;min-height:32px}
+@media (max-width:760px){.fields{grid-template-columns:repeat(2,1fr)}}
+.memo label{font-size:12px;color:var(--sub);display:block;margin:8px 0 3px}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+.hidden{display:none!important}
+.login{max-width:380px;margin:12vh auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:26px}
+.login h1{font-size:20px;margin:0 0 4px}
+.login label{display:block;margin:14px 0 4px;font-size:13px;color:var(--sub)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#263238;color:#fff;padding:10px 18px;border-radius:8px;z-index:100;opacity:0;transition:.25s;pointer-events:none;max-width:90vw}
+.toast.show{opacity:1}
+.toast.err{background:var(--red)}
+.overlay{position:fixed;inset:0;background:rgba(20,30,40,.45);z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px}
+.modal{background:#fff;border-radius:10px;max-width:1400px;width:100%;padding:16px;position:relative}
+.modal .x{position:absolute;right:12px;top:10px}
+.loading{position:fixed;inset:0;background:rgba(255,255,255,.55);z-index:90;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--blue)}
+.edit td{padding:2px}
+.edit input,.edit select{border:1px solid transparent;border-radius:4px;padding:4px 6px}
+.edit input:focus,.edit select:focus{border-color:var(--blue)}
+.edit tr:hover td{background:#fafbfc}
+.scroll{overflow:auto}
+.tag{display:inline-block;white-space:nowrap;font-size:11px;padding:0 6px;border-radius:4px;background:#eceff1;color:var(--sub)}
+.hist details{border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:#fff}
+.hist summary{padding:9px 12px;cursor:pointer;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.hist .body{padding:0 12px 12px}
+/* ---------- 미리보기 (엑셀 양식) ---------- */
+.pv{display:grid;grid-template-columns:760px 560px;gap:14px;font-family:"굴림",Gulim,"Malgun Gothic",sans-serif;font-size:12px;overflow:auto}
+.pv table{table-layout:fixed}
+.pv td,.pv th{border:1px solid #000;padding:3px 4px;text-align:center;font-size:12px;height:24px}
+.pv .hd{background:var(--head);font-weight:700;font-size:14px}
+.pv .lb{background:#dde8f3;font-weight:700}
+.pv .gr{background:var(--gray-l);font-weight:700;white-space:nowrap;font-size:11px}
+.pv .ye{background:#ffff00}
+.pv .left{text-align:left}
+.pv .sc{font-family:"Arial Black",Arial,sans-serif;font-weight:900;font-size:13px}
+.pv .or{background:#ffc000}
+.pv .bl{background:#bdd7ee}
+.pv svg{border:1px solid #d9d9d9;background:#fff;display:block}
+
+/* ===== 색상 개선 (역할별 색 구분) ===== */
+html,body{background:#e6eaef}
+.top{background:#1f3a5f;border-bottom:none;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.top h1{color:#fff}
+.top .muted{color:#c9d6e6}
+.tabs button{color:#c9d6e6}
+.tabs button:hover{background:rgba(255,255,255,.10);color:#fff}
+.tabs button.on{background:#fff;color:#1f3a5f}
+.top select{width:auto;border-color:#fff}
+.top .badge{background:#fff3c4;color:#6b4e00}
+.top #logoutBtn{background:transparent;color:#fff;border-color:#8fa6c1}
+.card{border-color:#d3d9df;box-shadow:0 1px 3px rgba(20,40,60,.06)}
+th{background:#e2efda;color:#274e13}
+.score td.inp{background:#fff8d6}
+.score input{background:#fffdf0;border-color:#e0c25a}
+.score input:focus{outline:2px solid #e0a000;background:#fff}
+.score td.ref{background:#eaf3fc}
+.score .ref b{font-size:17px}
+.score tr.minus td{background:#ddebf7}
+.score tr.minus td.inp{background:#fff1c6}
+.score tr.diff td.inp{background:#ffe8a3}
+.score tr.diff input{border-color:#d08a00;background:#fff4d0}
+.badge{font-weight:700}
+.badge.done{background:#c8e6c9;color:#1b5e20}
+.badge.draft{background:#ffe0b2;color:#b34700}
+.badge.none{background:#ffd6d6;color:#b71c1c}
+.pitem{border-left:4px solid transparent}
+.pitem.on{background:#e3eefa;border-color:#b9d3ec;border-left-color:#1f6fb2}
+.total{background:#e7f0f9;border:1px solid #b9d3ec;border-radius:8px;padding:8px 14px}
+.total b{font-size:26px}
+.sect.c-blue,.sect.c-orange,.sect.c-red{display:inline-block;color:#fff;padding:2px 10px;border-radius:4px}
+.sect.c-blue{background:#1f6fb2}.sect.c-orange{background:#d1662b}.sect.c-red{background:#c62828}
+.kv.red span:first-child{color:#c62828;font-weight:700}
+.kv{background:#fff}
+.fields .ro{background:#eef1f4;font-weight:700}
+.memo input,.memo textarea{background:#fffdf0;border-color:#e0c25a}
+#fMgr{background-color:#fffdf0;border-color:#e0c25a}
+.actions.sticky{position:sticky;bottom:0;background:rgba(255,255,255,.96);margin:14px -14px -14px;padding:10px 14px;border-top:1px solid #d3d9df;border-radius:0 0 10px 10px;z-index:5}
+.login{border-top:6px solid #1f3a5f;box-shadow:0 4px 18px rgba(20,40,60,.12)}
+.banner.warn{border:1px solid #ffd08a}
+.banner.lock{border:1px solid #f1b3b3}
+.banner.info{border:1px solid #b9d3ec}
+
+/* ===== 가독성·초보자용 개선 v2 ===== */
+html,body{font-size:15px;color:#111}
+.muted{color:#4a5561;font-size:13px}
+.card h2{font-size:17px}
+th{font-size:14px}
+.score td{font-size:14px}
+.score .why{color:#3d4852;font-size:12.5px}
+.kv div{font-size:14px}
+/* 버튼: 색이 채워진 네모 = 누르는 것 */
+button{background:#e7f0f9;border:1.5px solid #1f6fb2;color:#174e7c;font-weight:700;border-radius:7px;padding:8px 14px;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+button:hover{background:#d3e4f5}
+button:active{transform:translateY(1px)}
+button.primary{background:#1f6fb2;border-color:#1f6fb2;color:#fff}
+button.primary:hover{background:#185c95}
+button.green{background:#2e7d32;border-color:#2e7d32;color:#fff;font-size:16px;padding:10px 22px}
+button.green:hover{background:#256628}
+#saveDraft{font-size:16px;padding:10px 22px}
+button.danger{background:#fff;border-color:#c62828;color:#c62828}
+button.danger:hover{background:#fdecea}
+button.small{padding:4px 10px;font-size:13px}
+button:disabled{background:#e0e0e0;border-color:#bdbdbd;color:#888;box-shadow:none}
+/* 드롭다운: 흰 바탕 + 오른쪽 ▼ 표시 */
+select{appearance:none;-webkit-appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231f3a5f' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 10px center;
+  padding-right:32px!important;border:1.5px solid #8a96a3;border-radius:7px;font-weight:600;cursor:pointer}
+select:hover{border-color:#1f6fb2}
+.edit select{border:1px solid #c9cfd4}
+/* 상단 메뉴: 버튼처럼 보이게 */
+.top .wrap{padding:10px 16px}
+.tabs{gap:6px}
+.tabs button{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.35);color:#fff;font-weight:600;padding:7px 14px;box-shadow:none}
+.tabs button:hover{background:rgba(255,255,255,.2);color:#fff}
+.tabs button.on{background:#ffd54f;border-color:#ffd54f;color:#1f3a5f;font-weight:800}
+.top .muted{color:#fff;font-weight:700;font-size:14px}
+.top select{background-color:#fff;border-color:#fff;color:#1f3a5f;font-weight:800}
+.top #logoutBtn{background:transparent;color:#fff;border:1.5px solid #fff}
+/* 사용 순서 안내 */
+.steps{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.steps div{background:#fff;border:1px solid #c9d6e6;border-radius:8px;padding:7px 12px;font-size:14px}
+.steps b{display:inline-block;background:#1f3a5f;color:#fff;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;margin-right:6px;font-size:13px}
+.plist .ph{font-weight:800;padding:4px 8px 8px;color:#1f3a5f;border-bottom:1px solid #d3d9df;margin-bottom:6px}
+.pitem .nm{font-size:15px}
+.login select,.login input{font-size:16px;padding:10px 12px}
+.login .primary{font-size:17px;padding:12px}
+
+/* ===== 요약 목록 · 업무데이터 띠 · 평가요소 한 줄 ===== */
+.plist{padding:10px}
+table.sum{font-size:14px}
+table.sum th{padding:6px 4px;font-size:13px}
+table.sum td{padding:7px 5px;border-color:#e3e7ea}
+table.sum td.c{text-align:center;white-space:nowrap}
+table.sum td.nm{font-weight:700;white-space:nowrap}
+table.sum td.sc{font-weight:800;color:#1f6fb2;font-size:15px}
+table.sum td.low{color:#c62828;font-weight:700}
+table.sum tbody tr{cursor:pointer}
+table.sum tbody tr:hover td{background:#f3f7fb}
+table.sum tbody tr.on td{background:#e3eefa}
+table.sum tbody tr.on td:first-child{box-shadow:inset 4px 0 0 #1f6fb2}
+table.sum tfoot td{background:#f2f4f6;font-weight:700}
+table.strip td{padding:5px 8px;font-size:13.5px;border-color:#dfe3e6}
+table.strip td.k{background:#f2f2f2;font-weight:700;white-space:nowrap;color:#333}
+table.strip tr.red td.k{color:#c62828}
+table.strip td.v{font-weight:700;text-align:right;min-width:62px;white-space:nowrap}
+table.strip td.lab{color:#fff;font-weight:800;text-align:center;width:52px}
+table.strip td.lab.b{background:#1f6fb2}table.strip td.lab.o{background:#d1662b}table.strip td.lab.r{background:#c62828}
+.score .why{white-space:nowrap}
+.score td:nth-child(2){white-space:nowrap}
+.score td.ref{width:170px}
+#editor .card{overflow-x:auto}
+
+.savest{font-weight:700;font-size:14px;padding:4px 10px;border-radius:6px;background:#eef1f4;color:#4a5561;margin-right:auto}
+.savest.ok{background:#e8f5e9;color:#1b5e20}.savest.wait{background:#fff3e0;color:#b34700}.savest.err{background:#fdecea;color:#c62828}
+@media print{.top,.no-print{display:none!important}.overlay{position:static;background:none;padding:0}.modal{box-shadow:none;padding:0}}
+</style>
+</head>
+<body>
+
+<!-- ======================= 설정 ======================= -->
+<script>
+// ▼▼▼ 앱스 스크립트 배포 후 나온 "웹 앱 URL"을 따옴표 안에 붙여넣으세요 ▼▼▼
+const API_URL = 'https://script.google.com/macros/s/AKfycbwz4jZQr8QpG7wS6s9nHH89bQhUIZqo2KCeC9RCIRUDZxGBy3k9fsik-X4H3udHjaeK/exec';
+// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+</script>
+
+<div id="loginView" class="login">
+  <h1>조립팀 인사평가</h1>
+  <div class="muted">파트를 선택하고 비밀번호를 입력하세요</div>
+  <label>파트</label>
+  <select id="loginPart"><option value="">불러오는 중…</option></select>
+  <label>비밀번호</label>
+  <input id="loginPw" type="password" autocomplete="current-password">
+  <div style="margin-top:18px"><button class="primary" style="width:100%" id="loginBtn">들어가기</button></div>
+  <div id="loginMsg" class="muted" style="margin-top:10px;color:var(--red)"></div>
+</div>
+
+<div id="appView" class="hidden">
+  <div class="top"><div class="wrap">
+    <h1>조립팀 인사평가</h1>
+    <div class="tabs" id="tabs"></div>
+    <div class="sp"></div>
+    <label class="muted">평가월</label>
+    <select id="monthSel" style="width:auto"></select>
+    <span id="whoLabel" class="badge"></span>
+    <button class="small" id="logoutBtn">로그아웃</button>
+  </div></div>
+  <div class="wrap" id="main"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+<div id="loading" class="loading hidden">처리 중…</div>
+
+<script>
+/* =====================================================================
+   공통
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const esc = v => String(v === null || v === undefined ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => { if (v === '' || v === null || v === undefined) return null; const n = Number(String(v).replace(/[,%\s]/g,'')); return isFinite(n) ? n : null; };
+const f1 = (v, d = 1) => { const n = num(v); return n === null ? '-' : (Math.round(n * 10 ** d) / 10 ** d).toString(); };
+const pct = v => { const n = num(v); return n === null ? '-' : (n * 100).toFixed(1) + '%'; };
+const dash = v => (v === null || v === undefined || v === '') ? '-' : v;
+const SLOTS = 10;
+
+let AUTH = null;        // {role, part, pw}
+let META = null;        // {parts, current, months, locks, managers}
+let STATE = { tab: null, month: null, part: null, data: null, sel: null, dirty: false };
+
+function toast(msg, err) {
+  const t = $('#toast'); t.textContent = msg; t.className = 'toast show' + (err ? ' err' : '');
+  clearTimeout(t._h); t._h = setTimeout(() => t.className = 'toast', err ? 4500 : 2200);
+}
+function busy(on) { $('#loading').classList.toggle('hidden', !on); }
+
+async function api(action, body = {}, silent) {
+  if (!API_URL) throw new Error('index.html 의 API_URL 이 비어 있습니다. 앱스 스크립트 웹 앱 URL 을 넣어주세요.');
+  if (!silent) busy(true);
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ action }, AUTH || {}, body))
+    });
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error || '오류');
+    return j.data;
+  } finally { if (!silent) busy(false); }
+}
+
+/* =====================================================================
+   로그인
+   ===================================================================== */
+async function initLogin() {
+  try {
+    META = await api('meta', {}, true);
+    const sel = $('#loginPart');
+    sel.innerHTML = '<option value="">선택하세요</option>' +
+      META.parts.map(p => `<option value="part:${esc(p.name)}">${esc(p.name)}${p.manager ? ' (' + esc(p.manager) + ')' : ''}</option>`).join('') +
+      '<option value="admin">관리자</option>';
+    const saved = sessionStorage.getItem('auth');
+    if (saved) { AUTH = JSON.parse(saved); await doLogin(true); }
+  } catch (e) {
+    $('#loginPart').innerHTML = '<option value="">연결 실패</option>';
+    $('#loginMsg').textContent = e.message;
+  }
+}
+
+async function doLogin(auto) {
+  if (!auto) {
+    const v = $('#loginPart').value, pw = $('#loginPw').value;
+    if (!v) { $('#loginMsg').textContent = '파트를 선택하세요'; return; }
+    AUTH = v === 'admin' ? { role: 'admin', pw } : { role: 'part', part: v.slice(5), pw };
+  }
+  try {
+    const r = await api('login');
+    META = r.meta;
+    AUTH.user = r.user; AUTH.admin = r.admin;
+    try { sessionStorage.setItem('auth', JSON.stringify(AUTH)); } catch (e) {}
+    $('#loginView').classList.add('hidden'); $('#appView').classList.remove('hidden');
+    $('#whoLabel').textContent = r.admin ? '관리자' : (AUTH.part + ' · ' + r.user);
+    STATE.month = META.current || META.months[0];
+    STATE.part = r.admin ? (META.parts[0] || {}).name : AUTH.part;
+    buildMonthSel(); buildTabs();
+    go(r.admin ? 'overview' : 'eval');
+  } catch (e) {
+    AUTH = null; try { sessionStorage.removeItem('auth'); } catch (x) {}
+    $('#loginMsg').textContent = e.message;
+  }
+}
+
+async function logout() {
+  if (!(await guard())) return;
+  try { sessionStorage.removeItem('auth'); } catch (e) {}
+  location.reload();
+}
+
+function buildMonthSel() {
+  const months = new Set(META.months || []);
+  if (STATE.month) months.add(STATE.month);
+  const list = [...months].sort().reverse();
+  $('#monthSel').innerHTML = list.map(m => `<option value="${m}" ${m === STATE.month ? 'selected' : ''}>${m.replace('-', '년 ')}월${META.locks && META.locks[m] ? ' 🔒' : ''}</option>`).join('');
+}
+
+const TABS_ADMIN = [['overview', '현황'], ['eval', '평가 입력'], ['upload', '데이터 올리기'], ['config', '기준 설정'], ['roster', '명단·파트'], ['close', '마감·다운로드'], ['import', '기록 가져오기'], ['log', '수정기록']];
+function buildTabs() {
+  const t = $('#tabs');
+  t.innerHTML = AUTH.admin ? TABS_ADMIN.map(([k, v]) => `<button data-tab="${k}">${v}</button>`).join('') : '';
+  t.querySelectorAll('button').forEach(b => b.onclick = () => go(b.dataset.tab));
+}
+
+async function go(tab) {
+  if (!(await guard())) return;
+  STATE.dirty = false; STATE.tab = tab;
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  ({ overview: viewOverview, eval: viewEval, upload: viewUpload, config: viewConfig, roster: viewRoster, close: viewClose, import: viewImport, log: viewLog })[tab]();
+}
+
+/* ---------- 이동 전 저장 확인 ---------- */
+function askSave() {
+  return new Promise(res => {
+    const o = document.createElement('div'); o.className = 'overlay';
+    o.innerHTML = `<div class="modal" style="max-width:440px;margin-top:18vh"><h2 style="margin:0 0 10px">저장하지 않은 내용이 있습니다</h2>
+      <div class="muted" style="font-size:14px;margin-bottom:16px">입력한 내용을 저장하고 이동할까요?</div>
+      <div class="actions" style="justify-content:flex-start"><button class="primary" data-a="save">저장하고 이동</button><button class="danger" data-a="discard">저장하지 않고 이동</button><button data-a="cancel">취소</button></div></div>`;
+    o.querySelectorAll('[data-a]').forEach(b => b.onclick = () => { o.remove(); res(b.dataset.a); });
+    document.body.appendChild(o);
+  });
+}
+async function guard() {
+  if (!STATE.dirty) return true;
+  const a = await askSave();
+  if (a === 'cancel') return false;
+  if (a === 'save') return await save(null, true);
+  STATE.dirty = false; clearTimeout(STATE.timer); return true;
+}
+
+/* =====================================================================
+   평가 입력 (매니저 · 관리자)
+   ===================================================================== */
+async function viewEval(keepSel) {
+  const main = $('#main');
+  const partSel = AUTH.admin ? `<select id="partSel" style="width:auto">${META.parts.map(p => `<option ${p.name === STATE.part ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>` : `<b>${esc(STATE.part)}</b>`;
+  main.innerHTML = `<div class="steps"><div><b>1</b>왼쪽에서 이름 선택</div><div><b>2</b>[참고 점수 전체 적용] 누르기</div><div><b>3</b>점수 확인·수정 (노란 칸)</div><div><b>4</b>월간 총평 입력</div><div><b>5</b>[작성 완료] 누르기</div></div>
+    <div class="row" style="margin-bottom:10px">${AUTH.admin ? '<span style="font-weight:700">파트 선택</span>' : ''}${partSel}<span class="muted" id="evalSum"></span></div>
+    <div id="evalBanner"></div>
+    <div class="grid-eval">
+      <div class="card plist" id="plist"></div>
+      <div id="editor"><div class="card muted">왼쪽에서 인원을 선택하세요.</div></div>
+    </div>`;
+  if (AUTH.admin) $('#partSel').onchange = async e => { const v = e.target.value; e.target.value = STATE.part; if (!(await guard())) return; STATE.dirty = false; STATE.part = v; STATE.sel = null; viewEval(); };
+  try {
+    STATE.data = await api('getPart', { month: STATE.month, part: STATE.part });
+  } catch (e) { toast(e.message, 1); return; }
+  const d = STATE.data;
+  const locked = d.locked && !AUTH.admin;
+  $('#evalBanner').innerHTML = (d.locked ? `<div class="banner lock">🔒 ${d.month} 은(는) 마감되었습니다. ${AUTH.admin ? '관리자는 수정할 수 있습니다.' : '수정이 필요하면 관리자에게 요청하세요.'}</div>` : '') +
+    (!d.list.some(x => x.data.hasData) ? `<div class="banner warn">이 달의 업무데이터가 아직 올라오지 않았습니다. 참고 점수가 비어 있어도 직접 입력은 가능합니다.</div>` : '');
+  renderPList();
+  if (keepSel && STATE.sel) selectPerson(STATE.sel, true);
+  else if (d.list.length) selectPerson(d.list[0].person.name, true);
+}
+
+function recTotal(x) { return x.rec && x.rec['합계'] !== '' ? x.rec['합계'] : null; }
+
+function renderPList() {
+  const d = STATE.data;
+  const done = d.list.filter(x => x.rec && x.rec['상태'] === '완료').length;
+  $('#evalSum').textContent = `${d.month} · ${d.list.length}명 중 완료 ${done}명`;
+  const rows = d.list.map(x => {
+    const st = x.rec ? x.rec['상태'] : '';
+    const b = st === '완료' ? '<span class="badge done">완료</span>' : st ? '<span class="badge draft">작성중</span>' : '<span class="badge none">미작성</span>';
+    const t = recTotal(x), dt = x.data;
+    const low = dt.달성률 !== null && dt.달성률 < 1;
+    return `<tr class="${x.person.name === STATE.sel ? 'on' : ''}" data-n="${esc(x.person.name)}">
+      <td class="nm">${esc(x.person.name)}${x.person.role === '파트장' ? ' <span class="badge lead">파트장</span>' : ''}</td>
+      <td class="c">${esc(x.person.grade || '-')}</td>
+      <td class="c sc">${t !== null ? t : '-'}</td>
+      <td class="c ${low ? 'low' : ''}">${dt.일평균 === null ? '-' : f1(dt.일평균) + '대'}</td>
+      <td class="c ${low ? 'low' : ''}">${dt.달성률 === null ? '-' : Math.round(dt.달성률 * 100) + '%'}</td>
+      <td class="c">${b}</td></tr>`;
+  }).join('');
+  const sc = d.list.map(recTotal).filter(v => v !== null).map(Number);
+  const av = d.list.map(x => x.data.일평균).filter(v => v !== null);
+  const avg = a => a.length ? a.reduce((p, q) => p + q, 0) / a.length : null;
+  $('#plist').innerHTML = `<div class="ph">인원 선택 <span class="muted">(이름을 누르세요)</span></div>
+    <table class="sum"><thead><tr><th>이름</th><th>등급</th><th>점수</th><th>일평균</th><th>달성률</th><th>상태</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="6" class="muted">인원이 없습니다.</td></tr>'}</tbody>
+    <tfoot><tr><td>파트 평균</td><td></td><td class="c">${sc.length ? f1(avg(sc)) : '-'}</td><td class="c">${av.length ? f1(avg(av)) + '대' : '-'}</td><td></td><td class="c">${done}/${d.list.length}</td></tr></tfoot></table>`;
+  $('#plist').querySelectorAll('tbody tr[data-n]').forEach(el => el.onclick = () => selectPerson(el.dataset.n));
+}
+
+function curPerson() { return STATE.data.list.find(x => x.person.name === STATE.sel); }
+function usedItems(items, person) {
+  return items.filter(it => it.use && (it.target === '전체' || it.target === person.role));
+}
+
+async function selectPerson(name, force) {
+  if (!force && name !== STATE.sel && !(await guard())) return;
+  STATE.dirty = false; clearTimeout(STATE.timer); STATE.sel = name;
+  document.querySelectorAll('#plist tr[data-n]').forEach(el => el.classList.toggle('on', el.dataset.n === name));
+  const x = curPerson(); if (!x) return;
+  const d = STATE.data, p = x.person, rec = x.rec || {};
+  const items = usedItems(d.items, p);
+  const locked = d.locked && !AUTH.admin;
+  const partInfo = META.parts.find(q => q.name === p.part) || {};
+  const mgrs = [...new Set([...(META.managers || []), partInfo.manager].filter(Boolean))];
+  const mgrVal = rec['관리자'] || partInfo.manager || '';
+  const rows = items.map(it => {
+    const k = it.no - 1, ref = x.refs[k], note = x.notes[k] || '';
+    const val = rec['점수' + it.no] !== undefined && rec['점수' + it.no] !== '' ? rec['점수' + it.no] : '';
+    const isMinus = it.sign < 0;
+    return `<tr data-no="${it.no}" class="${isMinus ? 'minus' : ''}">
+      <td class="muted" style="width:84px;white-space:nowrap">${esc(it.group)}</td>
+      <td><b>${esc(it.name)}</b><div class="why">${esc(it.desc)}</div></td>
+      <td style="width:58px;text-align:center">${isMinus ? '<span class="tag">감점</span>' : esc(it.max) + '점'}</td>
+      <td class="inp" style="width:96px;text-align:center"><input type="number" step="0.5" min="0" inputmode="decimal" data-no="${it.no}" value="${esc(val)}" ${locked ? 'disabled' : ''} placeholder="${isMinus ? '감점' : '점수'}"></td>
+      <td class="ref" style="width:210px">${ref === null ? '<span class="muted">참고 없음</span>' : `<b>${isMinus && ref ? '-' : ''}${ref}</b>${isMinus ? '' : '점'} <button class="small" data-apply="${it.no}" ${locked ? 'disabled' : ''}>이 점수 넣기</button>`}<div class="why">${esc(note)}</div></td>
+    </tr>`;
+  }).join('');
+  $('#editor').innerHTML = `<div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div class="row"><h2 style="margin:0">${esc(p.name)}</h2>
+        <span class="badge">${esc(p.part)}</span><span class="badge ${p.role === '파트장' ? 'lead' : ''}">${esc(p.role)}</span>
+        <span class="badge">등급 ${esc(p.grade || '없음')}</span>${p.memo ? `<span class="badge">${esc(p.memo)}</span>` : ''}
+        ${rec['상태'] ? `<span class="badge ${rec['상태'] === '완료' ? 'done' : 'draft'}">${esc(rec['상태'])}</span>` : ''}</div>
+      <div class="row"><button id="histBtn">지난 기록</button><button id="pvBtn">미리보기</button></div>
+    </div>
+    ${rec['저장시각'] ? `<div class="muted" style="margin:4px 0 0">마지막 저장 ${esc(rec['저장시각'])} · ${esc(rec['작성자'])}</div>` : ''}
+    <div id="side"></div>
+    <div class="row" style="justify-content:space-between;margin:12px 0 6px">
+      <div class="sect" style="margin:0">인사평가 점수</div>
+      <button class="small primary" id="applyAll" ${locked ? 'disabled' : ''}>참고 점수 전체 적용</button>
+    </div>
+    <table class="score"><thead><tr><th>구분</th><th>평가 요소 · 기준</th><th>배점</th><th>입력</th><th>참고 점수</th></tr></thead><tbody id="scoreBody">${rows}</tbody></table>
+    <div class="total"><span class="muted">추가평가(가점)는 엑셀 인사평가표에서 입력합니다</span><span>합계</span><b id="totalVal">-</b></div>
+    <div class="sect">월간 총평</div>
+    <div class="fields">
+      <div><label>관리자</label><select id="fMgr" ${locked ? 'disabled' : ''}><option value=""></option>${mgrs.map(m => `<option ${m === mgrVal ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></div>
+      <div><label>월 목표</label><div class="ro">${x.data.개인목표 === null ? '-' : f1(x.data.개인목표) + '대'}</div></div>
+      <div><label>결과 (일평균)</label><div class="ro">${x.data.일평균 === null ? '-' : f1(x.data.일평균, 2) + '대'}</div></div>
+      <div><label>달성률</label><div class="ro">${pct(x.data.달성률)}</div></div>
+    </div>
+    <div class="memo">
+      <label>업무평가 (1줄)</label><input type="text" id="fW1" placeholder="여기에 입력" value="${esc(rec['업무평가1'])}" ${locked ? 'disabled' : ''}>
+      <label>업무평가 (2줄)</label><input type="text" id="fW2" value="${esc(rec['업무평가2'])}" ${locked ? 'disabled' : ''}>
+      <label>건강관리</label><textarea id="fH" placeholder="여기에 입력" ${locked ? 'disabled' : ''}>${esc(rec['건강관리'])}</textarea>
+      <label>특이사항</label><textarea id="fS" placeholder="여기에 입력" ${locked ? 'disabled' : ''}>${esc(rec['특이사항'])}</textarea>
+    </div>
+    <div class="actions sticky" style="align-items:center">
+      <span id="saveState" class="savest"></span><span class="muted">입력 후 30초가 지나면 자동 저장됩니다</span>
+      <button class="green" id="saveDone" ${locked ? 'disabled' : ''}>작성 완료</button>
+    </div></div>`;
+  renderSide(x);
+  const body = $('#scoreBody');
+  body.querySelectorAll('input').forEach(inp => inp.oninput = () => { touch(); updTotals(); });
+  body.querySelectorAll('[data-apply]').forEach(b => b.onclick = () => { const no = +b.dataset.apply; const inp = body.querySelector(`input[data-no="${no}"]`); inp.value = x.refs[no - 1]; touch(); updTotals(); });
+  $('#applyAll').onclick = () => { items.forEach(it => { const r = x.refs[it.no - 1]; if (r !== null) body.querySelector(`input[data-no="${it.no}"]`).value = r; }); touch(); updTotals(); toast('참고 점수를 넣었습니다. 확인 후 [작성 완료]를 누르세요'); };
+  ['#fMgr', '#fW1', '#fW2', '#fH', '#fS'].forEach(s => $(s).addEventListener('input', touch));
+  $('#saveDone').onclick = () => save('완료');
+  setSaveState(rec['저장시각'] ? '저장됨 · ' + String(rec['저장시각']).slice(5, 16) : '아직 저장 안 됨', rec['저장시각'] ? 'ok' : '');
+  $('#pvBtn').onclick = () => openPreview(x);
+  $('#histBtn').onclick = () => openHistory(p.name);
+  updTotals();
+}
+
+function readScores() {
+  const arr = new Array(SLOTS).fill('');
+  document.querySelectorAll('#scoreBody input[data-no]').forEach(i => arr[+i.dataset.no - 1] = i.value);
+  return arr;
+}
+
+function updTotals() {
+  const x = curPerson(); if (!x) return;
+  const items = usedItems(STATE.data.items, x.person);
+  let t = 0, any = false;
+  document.querySelectorAll('#scoreBody tr').forEach(tr => {
+    const no = +tr.dataset.no, it = items.find(i => i.no === no);
+    const v = num(tr.querySelector('input').value), ref = x.refs[no - 1];
+    if (v !== null) { t += it.sign * v; any = true; }
+    tr.classList.toggle('diff', v !== null && ref !== null && v !== ref);
+  });
+  $('#totalVal').textContent = any ? (Math.round(t * 10) / 10) + '점' : '-';
+  const cell = document.querySelector('#plist tr.on .sc'); if (cell) cell.textContent = any ? Math.round(t * 10) / 10 : '-';
+}
+
+const AUTO_MS = 30000;
+function touch() {
+  if (STATE.data && STATE.data.locked && !AUTH.admin) return;
+  STATE.dirty = true; setSaveState('저장 안 됨 · 30초 뒤 자동 저장', 'wait');
+  clearTimeout(STATE.timer); STATE.timer = setTimeout(() => save(null, true), AUTO_MS);
+}
+function setSaveState(t, cls) { const el = $('#saveState'); if (el) { el.textContent = t; el.className = 'savest ' + (cls || ''); } }
+function hhmm() { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
+
+// status: '완료' = 작성 완료 버튼 / null = 자동 저장(기존 상태 유지, 없으면 작성중)
+async function save(status, auto) {
+  clearTimeout(STATE.timer);
+  const x = curPerson(); if (!x) return true;
+  const items = usedItems(STATE.data.items, x.person);
+  const sc = readScores();
+  if (status === '완료') {
+    const empty = items.filter(it => it.sign > 0 && num(sc[it.no - 1]) === null);
+    if (empty.length && !confirm(`비어 있는 점수가 있습니다: ${empty.map(i => i.name).join(', ')}\n그래도 작성 완료로 저장할까요?`)) return false;
+  }
+  for (const it of items) {
+    const v = num(sc[it.no - 1]);
+    const mx = num(it.maxv !== null ? it.maxv : it.max);
+    if (v !== null && v < 0) { toast(`${it.name}: 0 이상으로 입력하세요 (감점은 숫자만)`, 1); setSaveState('저장 안 됨 · 점수를 확인하세요', 'err'); return false; }
+    if (v !== null && it.sign > 0 && mx !== null && v > mx) { toast(`${it.name}: 최대 ${mx}점입니다`, 1); setSaveState('저장 안 됨 · 점수를 확인하세요', 'err'); return false; }
+  }
+  const st = status || (x.rec && x.rec['상태']) || '작성중';
+  const diffs = items.filter(it => { const v = num(sc[it.no - 1]), r = x.refs[it.no - 1]; return v !== null && r !== null && v !== r; });
+  setSaveState('저장 중…', 'wait');
+  try {
+    const r = await api('save', {
+      month: STATE.data.month, name: x.person.name, scores: sc, status: st, auto: !!auto,
+      fields: { 관리자: $('#fMgr').value, 업무평가1: $('#fW1').value, 업무평가2: $('#fW2').value, 건강관리: $('#fH').value, 특이사항: $('#fS').value }
+    }, auto);
+    x.rec = r.saved; STATE.dirty = false;
+    renderPList();
+    if (auto) { setSaveState('자동 저장됨 · ' + hhmm(), 'ok'); }
+    else {
+      selectPerson(x.person.name, true);
+      toast(`작성 완료 저장됨 (합계 ${r.total}점)${diffs.length ? ` · 참고와 다른 칸 ${diffs.length}개` : ''}`);
+    }
+    return true;
+  } catch (e) { toast(e.message, 1); setSaveState('저장 실패 · ' + e.message, 'err'); return false; }
+}
+
+function renderSide(x) {
+  const d = x.data;
+  const cells = arr => arr.map(([k, v]) => k ? `<td class="k">${k}</td><td class="v">${v}</td>` : '<td class="k"></td><td class="v"></td>').join('');
+  $('#side').innerHTML = `<div class="sect" style="margin:12px 0 6px">업무데이터 <span class="muted">${esc(STATE.data.month)}</span>${d.hasData ? '' : ' <span class="badge none">이 인원의 업무데이터가 없습니다</span>'}</div>
+  <div class="scroll"><table class="strip">
+    <tr><td class="lab b" rowspan="2">실적</td>${cells([['총수량', d.총수량 === null ? '-' : f1(d.총수량) + '대'], ['총수량순위', d.총수량순위 ? d.총수량순위 + '위' : '-'],
+      ['일평균', d.일평균 === null ? '-' : f1(d.일평균, 2) + '대'], ['평균순위', d.평균순위 ? d.평균순위 + '위' : '-'], ['파트 내 순위', d.파트순위 ? d.파트순위 + ' / ' + d.파트인원 : '-']])}</tr>
+    <tr>${cells([['개인목표', d.개인목표 === null ? '-' : f1(d.개인목표) + '대'], ['달성률', pct(d.달성률)], ['전월평균', d.전월평균 === null ? '-' : f1(d.전월평균, 2) + '대'], ['', ''], ['', '']])}</tr>
+    <tr class="red"><td class="lab o">근태</td>${cells([['근무일수', dash(d.근무일수)], ['당일연차', dash(d.당일연차)], ['지각', dash(d.지각)], ['조퇴', dash(d.조퇴)], ['결근', dash(d.결근)]])}</tr>
+    <tr class="red"><td class="lab r">사고</td>${cells([['품질지적', dash(d.품질지적)], ['지시불이행', dash(d.지시불이행)], ['미/오발송', dash(d.미오발송)], ['오조립', dash(d.오조립)], ['파손', dash(d.파손)]])}</tr>
+  </table></div>`;
+}
+
+/* ---------- 지난 기록 ---------- */
+function parseItems(rec) { try { return JSON.parse(rec['항목설정'] || '[]'); } catch (e) { return []; } }
+
+async function openHistory(name) {
+  let list;
+  try { list = await api('history', { name }); } catch (e) { toast(e.message, 1); return; }
+  const html = list.slice().reverse().map(r => {
+    const its = parseItems(r);
+    return `<details><summary><b>${esc(r['평가월'])}</b>
+      <span>합계 <b>${dash(r['합계'])}</b>점</span><span>일평균 ${r['일평균'] === '' ? '-' : f1(r['일평균'], 2) + '대'}</span>
+      <span class="tag">${r['기준구분'] === '구' ? '구 기준' : '신 기준'}</span><span class="badge ${r['상태'] === '완료' ? 'done' : 'draft'}">${esc(r['상태'])}</span>
+      <span class="muted">${esc(r['작성자'])}</span></summary>
+      <div class="body">
+        <table><tr>${its.map(i => `<th>${esc(i.name)}<div class="muted">${i.sign < 0 ? '감점' : esc(i.max) + '점'}</div></th>`).join('')}<th>합계</th></tr>
+        <tr>${its.map(i => `<td style="text-align:center">${dash(r['점수' + i.no])}</td>`).join('')}<td style="text-align:center"><b>${dash(r['합계'])}</b></td></tr></table>
+        <div class="memo"><label>관리자</label>${esc(r['관리자']) || '-'}
+        <label>업무평가</label>${esc(r['업무평가1']) || '-'}${r['업무평가2'] ? '<br>' + esc(r['업무평가2']) : ''}
+        <label>건강관리</label>${esc(r['건강관리']) || '-'}
+        <label>특이사항</label>${esc(r['특이사항']) || '-'}</div>
+        <div class="muted" style="margin-top:8px">총수량 ${dash(r['총수량'])} · 근무일수 ${dash(r['근무일수'])} · 지각 ${dash(r['지각'])} · 조퇴 ${dash(r['조퇴'])} · 결근 ${dash(r['결근'])} · 사고(품질지적 ${dash(r['품질지적'])}, 미/오발송 ${dash(r['미오발송'])}, 오조립 ${dash(r['오조립'])}, 파손 ${dash(r['파손'])})</div>
+      </div></details>`;
+  }).join('');
+  modal(`<h2 style="margin:0 0 12px">${esc(name)} · 지난 기록</h2><div class="hist">${html || '<div class="muted">저장된 기록이 없습니다.</div>'}</div>`);
+}
+
+function modal(html) {
+  const o = document.createElement('div');
+  o.className = 'overlay';
+  o.innerHTML = `<div class="modal"><button class="x no-print">닫기</button>${html}</div>`;
+  o.onclick = e => { if (e.target === o) o.remove(); };
+  o.querySelector('.x').onclick = () => o.remove();
+  document.body.appendChild(o);
+  return o;
+}
+
+/* ---------- 미리보기 (엑셀 인사평가표 모양) ---------- */
+function monthCols(month) { // 1~12월 고정 칼럼 → 해당 칸의 실제 연월
+  const [y, m] = month.split('-').map(Number);
+  return Array.from({ length: 12 }, (_, i) => { const mm = i + 1, yy = mm > m ? y - 1 : y; return { mm, key: `${yy}-${String(mm).padStart(2, '0')}`, last: yy < y }; });
+}
+
+function lineSvg(vals, color, fmt, min, max) {
+  const W = 560, H = 245, L = 46, R = 14, T = 34, B = 26, iw = W - L - R, ih = H - T - B;
+  const nums = vals.filter(v => v !== null);
+  if (min === undefined) { const lo = nums.length ? Math.min(...nums) : 0, hi = nums.length ? Math.max(...nums) : 1; min = Math.floor(lo - 1); max = Math.ceil(hi + 1); }
+  const step = (max - min) / 5;
+  const x = i => L + iw * (i + 0.5) / 12, y = v => T + ih * (1 - (v - min) / (max - min));
+  let g = '';
+  for (let k = 0; k <= 5; k++) { const v = min + step * k, yy = y(v); g += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="#dfe3e6"/><text x="${L - 4}" y="${yy + 3}" font-size="9" text-anchor="end" fill="#555">${fmt(v)}</text>`; }
+  for (let i = 0; i < 12; i++) g += `<text x="${x(i)}" y="${H - 8}" font-size="9" text-anchor="middle" fill="#555">${i + 1}월</text>`;
+  let path = '', dots = '';
+  vals.forEach((v, i) => { if (v === null) return; path += (path ? 'L' : 'M') + x(i) + ' ' + y(v) + ' '; dots += `<circle cx="${x(i)}" cy="${y(v)}" r="3.2" fill="${color}"/><text x="${x(i)}" y="${y(v) - 7}" font-size="9" text-anchor="middle">${fmt(v)}</text>`; });
+  return { g, path, dots, W, H };
+}
+
+async function openPreview(x) {
+  let hist = [];
+  try { hist = await api('history', { name: x.person.name }); } catch (e) { toast(e.message, 1); }
+  const month = STATE.data.month, p = x.person;
+  const items = usedItems(STATE.data.items, p);
+  const sc = readScores();
+  const fields = { 관리자: $('#fMgr').value, 업무평가1: $('#fW1').value, 업무평가2: $('#fW2').value, 건강관리: $('#fH').value, 특이사항: $('#fS').value };
+  let tot = 0; items.forEach(it => { const v = num(sc[it.no - 1]); if (v !== null) tot += it.sign * v; });
+  tot = Math.round(tot * 10) / 10;
+  const hm = {}; hist.forEach(r => hm[r['평가월']] = r);
+  hm[month] = Object.assign({}, hm[month] || {}, { 합계: tot, 일평균: x.data.일평균 === null ? '' : x.data.일평균 });
+  const cols = monthCols(month);
+  const sVals = cols.map(c => hm[c.key] ? num(hm[c.key]['합계']) : null);
+  const qVals = cols.map(c => hm[c.key] ? num(hm[c.key]['일평균']) : null);
+  const groups = []; items.forEach(it => { const g = groups.find(q => q.name === it.group); g ? g.items.push(it) : groups.push({ name: it.group, items: [it] }); });
+  const itemRows = groups.map(g => g.items.map((it, i) => {
+    const cls = it.sign < 0 ? 'bl' : '';
+    const v = num(sc[it.no - 1]);
+    return `<tr>${i === 0 ? `<td rowspan="${g.items.length}" class="${cls}" style="font-weight:700">${esc(g.name)}</td>` : ''}
+      <td class="${cls}">${esc(it.name)}</td><td class="${cls}">${it.sign < 0 ? '감점' : esc(it.max) + ' 점'}</td>
+      <td class="left ${cls}" colspan="8" style="font-size:11px">${esc(it.desc)}</td>
+      <td class="sc ${cls}">${v === null ? '' : (it.sign < 0 && v ? '-' + v : v)}</td></tr>`;
+  }).join('')).join('');
+  const d = x.data;
+  const c1 = lineSvg(sVals, '#1F6FB2', v => Math.round(v) + '점', 50, 100);
+  const c2 = lineSvg(qVals, '#D1662B', v => (+v).toFixed(1) + '대');
+  const svg = (c, title, color) => `<svg width="${c.W}" height="${c.H}" viewBox="0 0 ${c.W} ${c.H}"><text x="${c.W / 2}" y="20" font-size="14" font-weight="700" text-anchor="middle">${title}</text>${c.g}<path d="${c.path}" fill="none" stroke="${color}" stroke-width="2"/>${c.dots}</svg>`;
+  const td = v => `<td>${dash(v)}</td>`;
+  modal(`<div class="row no-print" style="margin-bottom:10px"><h2 style="margin:0">미리보기 · ${esc(p.name)} (${month})</h2><span class="muted">저장 전 내용 기준 · 인적사항·사진·가점은 엑셀에서 표시됩니다</span><button class="small" onclick="window.print()">인쇄</button></div>
+  <div class="pv">
+   <div>
+    <table>
+      <colgroup><col style="width:62px"><col style="width:104px"><col style="width:50px"><col span="8" style="width:54px"><col style="width:80px"></colgroup>
+      <tr><td class="hd" colspan="12">인사평가표</td></tr>
+      <tr><th>구분</th><th>평가 요소</th><th>총 점</th><th colspan="8">평가 기준</th><th>평가 점수</th></tr>
+      ${itemRows}
+      <tr><td class="or" style="font-weight:700">추가평가</td><td class="or">미래성과평가</td><td class="or">가점</td><td class="or left" colspan="8" style="font-size:11px">엑셀에서 입력</td><td class="or"></td></tr>
+      <tr><td colspan="10" style="border-right:none"></td><td style="font-weight:700">총점</td><td class="sc" style="color:#d1662b">${tot}</td></tr>
+    </table>
+    <table style="margin-top:8px">
+      <colgroup><col style="width:60px"><col span="12"></colgroup>
+      <tr><td class="hd" colspan="13">인사평가표</td></tr>
+      <tr><td class="lb" rowspan="2">평가점수</td>${cols.map(c => `<td class="${c.last ? 'ye' : 'lb'}">${c.mm} 월</td>`).join('')}</tr>
+      <tr>${cols.map((c, i) => `<td class="${c.last ? 'ye' : ''}">${sVals[i] === null ? '' : Math.round(sVals[i]) + ' 점'}</td>`).join('')}</tr>
+      <tr><td class="lb" rowspan="2">평균수량</td>${cols.map(c => `<td class="${c.last ? 'ye' : 'lb'}">${c.mm} 월</td>`).join('')}</tr>
+      <tr>${cols.map((c, i) => `<td class="${c.last ? 'ye' : ''}">${qVals[i] === null ? '' : qVals[i].toFixed(1) + ' 대'}</td>`).join('')}</tr>
+    </table>
+    <table style="margin-top:8px">
+      <colgroup><col style="width:60px"><col style="width:84px"><col style="width:70px"><col></colgroup>
+      <tr><td class="hd" colspan="4">월 간 총 평</td></tr>
+      <tr><td class="gr">관 리 자</td><td>${esc(fields.관리자)}</td><td class="gr" rowspan="2">업무평가</td><td class="left">${esc(fields.업무평가1)}</td></tr>
+      <tr><td class="gr">월 목 표</td><td>${d.개인목표 === null ? '' : f1(d.개인목표)}</td><td class="left">${esc(fields.업무평가2)}</td></tr>
+      <tr><td class="gr">결 과</td><td>${d.일평균 === null ? '' : f1(d.일평균)}</td><td class="gr">건강관리</td><td class="left">${esc(fields.건강관리)}</td></tr>
+      <tr><td class="gr">달 성 률</td><td>${pct(d.달성률)}</td><td class="gr">특이사항</td><td class="left">${esc(fields.특이사항)}</td></tr>
+    </table>
+   </div>
+   <div>
+    ${svg(c1, '월별 평가점수', '#1F6FB2')}
+    ${svg(c2, '월별 평균수량', '#D1662B')}
+    <table>
+      <tr><td class="gr">총수량</td>${td(d.총수량 === null ? null : f1(d.총수량, 2))}<td class="gr">순위</td>${td(d.총수량순위)}<td class="gr">일평균</td>${td(d.일평균 === null ? null : f1(d.일평균, 2))}<td class="gr">개인목표</td>${td(d.개인목표)}<td class="gr">달성율</td><td>${pct(d.달성률)}</td></tr>
+      <tr><td class="gr">근무일수</td>${td(d.근무일수)}<td class="gr">당일연차</td>${td(d.당일연차)}<td class="gr">지각</td>${td(d.지각)}<td class="gr">조퇴</td>${td(d.조퇴)}<td class="gr">결근</td>${td(d.결근)}</tr>
+      <tr><td class="gr">품질지적</td>${td(d.품질지적)}<td class="gr">지시불이행</td>${td(d.지시불이행)}<td class="gr">미/오발송</td>${td(d.미오발송)}<td class="gr">오조립</td>${td(d.오조립)}<td class="gr">파손</td>${td(d.파손)}</tr>
+    </table>
+   </div>
+  </div>`);
+}
+
+/* =====================================================================
+   관리자 — 현황
+   ===================================================================== */
+async function viewOverview() {
+  const main = $('#main');
+  main.innerHTML = '<div class="card muted">불러오는 중…</div>';
+  let d; try { d = await api('getAll', { month: STATE.month }); } catch (e) { toast(e.message, 1); return; }
+  const parts = META.parts.map(p => p.name);
+  const byPart = parts.map(pt => { const l = d.list.filter(x => x.person.part === pt); return { pt, n: l.length, done: l.filter(x => x.rec && x.rec['상태'] === '완료').length, draft: l.filter(x => x.rec && x.rec['상태'] === '작성중').length }; });
+  const diffCount = x => { if (!x.rec) return 0; let c = 0; for (let i = 1; i <= SLOTS; i++) { const v = num(x.rec['점수' + i]), r = num(x.rec['참고' + i]); if (v !== null && r !== null && v !== r) c++; } return c; };
+  const noData = d.list.filter(x => !x.data.hasData).length;
+  main.innerHTML = `
+    <div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${d.month} 진행 현황 ${d.locked ? '<span class="badge">🔒 마감</span>' : ''}</h2>
+      <span class="muted">업무데이터 없는 인원 ${noData}명</span></div>
+      <div class="scroll" style="margin-top:10px"><table><tr><th>파트</th>${byPart.map(b => `<th>${esc(b.pt)}</th>`).join('')}<th>전체</th></tr>
+      <tr><td>완료 / 인원</td>${byPart.map(b => `<td style="text-align:center">${b.done} / ${b.n}${b.draft ? `<div class="muted">작성중 ${b.draft}</div>` : ''}</td>`).join('')}
+      <td style="text-align:center"><b>${byPart.reduce((a, b) => a + b.done, 0)} / ${d.list.length}</b></td></tr></table></div></div>
+    <div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">인원별</h2>
+      <div class="row"><select id="ovPart" style="width:auto"><option value="">전체 파트</option>${parts.map(p => `<option>${esc(p)}</option>`).join('')}</select>
+      <select id="ovSt" style="width:auto"><option value="">전체 상태</option><option>완료</option><option>작성중</option><option>미작성</option><option value="diff">참고와 다름</option></select></div></div>
+      <div class="scroll" style="margin-top:10px"><table id="ovTbl"></table></div></div>`;
+  const draw = () => {
+    const fp = $('#ovPart').value, fs = $('#ovSt').value;
+    const rows = d.list.filter(x => (!fp || x.person.part === fp) && (!fs || (fs === 'diff' ? diffCount(x) > 0 : (x.rec ? x.rec['상태'] : '미작성') === fs)));
+    $('#ovTbl').innerHTML = `<tr><th>파트</th><th>이름</th><th>직책</th><th>등급</th><th>상태</th><th>합계</th><th>참고와 다른 칸</th><th>일평균</th><th>작성자</th><th>저장시각</th><th></th></tr>` +
+      rows.map(x => { const st = x.rec ? x.rec['상태'] : '미작성', dc = diffCount(x); return `<tr>
+        <td>${esc(x.person.part)}</td><td><b>${esc(x.person.name)}</b></td><td>${esc(x.person.role)}</td><td>${esc(x.person.grade || '-')}</td>
+        <td><span class="badge ${st === '완료' ? 'done' : st === '작성중' ? 'draft' : 'none'}">${st}</span></td>
+        <td style="text-align:center">${x.rec ? dash(x.rec['합계']) : '-'}</td>
+        <td style="text-align:center;${dc ? 'background:#fff8e1;font-weight:700' : ''}">${dc || ''}</td>
+        <td style="text-align:center">${x.data.일평균 === null ? '-' : f1(x.data.일평균, 2)}</td>
+        <td>${x.rec ? esc(x.rec['작성자']) : ''}</td><td class="muted">${x.rec ? esc(x.rec['저장시각']) : ''}</td>
+        <td><button class="small" data-open="${esc(x.person.name)}" data-part="${esc(x.person.part)}">열기</button></td></tr>`; }).join('');
+    $('#ovTbl').querySelectorAll('[data-open]').forEach(b => b.onclick = () => { STATE.part = b.dataset.part; STATE.sel = b.dataset.open; STATE.tab = 'eval'; document.querySelectorAll('#tabs button').forEach(t => t.classList.toggle('on', t.dataset.tab === 'eval')); viewEval(true); });
+  };
+  $('#ovPart').onchange = draw; $('#ovSt').onchange = draw; draw();
+}
+
+/* =====================================================================
+   관리자 — 데이터 올리기
+   ===================================================================== */
+const normH = s => String(s === null || s === undefined ? '' : s).replace(/\s+/g, '');
+function findHeader(aoa, must) {
+  for (let r = 0; r < Math.min(aoa.length, 40); r++) {
+    const row = (aoa[r] || []).map(normH);
+    if (must.every(m => row.some(c => c === m))) return r;
+  }
+  return -1;
+}
+function colMap(row) { const m = {}; row.forEach((c, i) => { const k = normH(c); if (k && m[k] === undefined) m[k] = i; }); return m; }
+
+function parseWork(ws) {
+  const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
+  const hr = findHeader(aoa, ['이름', '평가평균']);
+  if (hr < 0) throw new Error('"이름", "평가평균" 제목이 있는 줄을 찾지 못했습니다. 업무데이터 시트가 맞는지 확인하세요.');
+  const m = colMap(aoa[hr]);
+  const pick = (row, ...keys) => { for (const k of keys) if (m[k] !== undefined) return row[m[k]]; return ''; };
+  const out = {}, order = [];
+  for (let r = hr + 1; r < aoa.length; r++) {
+    const row = aoa[r]; const name = String(pick(row, '이름') || '').trim();
+    if (!name || name === '이름' || /^[\d.]+$/.test(name)) continue;
+    const k = normH(name); if (out[k]) continue;
+    let ach = num(pick(row, '달성_%', '달성율', '달성률')); if (ach !== null && ach > 3) ach = ach / 100;
+    out[k] = {
+      이름: name, 원본그룹: pick(row, '그룹'), 직위: pick(row, '직위'), 조립수량: num(pick(row, '조립수량')), 목표수량: num(pick(row, '목표수량')),
+      평가평균: num(pick(row, '평가평균')), 실제평균: num(pick(row, '실제평균')), 근무일수: num(pick(row, '총근무일', '근무일')), 총량: num(pick(row, '총량(환산)', '총량')),
+      달성률: ach, 순위: num(pick(row, '순위(평가)')), 조퇴: num(pick(row, '조퇴')), 지각: num(pick(row, '지각')), 당일연차: num(pick(row, '당일연차')),
+      결근: num(pick(row, '결근')), 지시불이행: num(pick(row, '지시불이행')), 원본등급: pick(row, '등급'),
+      품질지적: 0, 미발송: 0, 오발송: 0, 오조립: 0, 파손: 0
+    };
+    order.push(k);
+  }
+  return { rows: out, order };
+}
+
+const ACC_KINDS = { '품질지적': '품질지적', '지시불이행': '지시불이행', '미발송': '미발송', '오발송': '오발송', '오배송': '오발송', '오조립': '오조립', '파손': '파손' };
+function parseAcc(ws) {
+  const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
+  const hr = findHeader(aoa, ['이름', '구분']);
+  if (hr < 0) throw new Error('"이름", "구분" 제목이 있는 줄을 찾지 못했습니다. 사고 시트가 맞는지 확인하세요.');
+  const m = colMap(aoa[hr]); const out = {}; let n = 0;
+  for (let r = hr + 1; r < aoa.length; r++) {
+    const row = aoa[r]; const name = String(row[m['이름']] || '').trim(); const kind = ACC_KINDS[normH(row[m['구분']])];
+    if (!name || !kind) continue;
+    const k = normH(name); out[k] = out[k] || { 이름: name }; out[k][kind] = (out[k][kind] || 0) + 1; n++;
+  }
+  return { rows: out, count: n };
+}
+
+function viewUpload() {
+  const main = $('#main');
+  main.innerHTML = `<div class="card"><h2>월간 데이터 올리기</h2>
+    <div class="banner info">매달 한 번, 업무통계 엑셀과 사고 엑셀을 올리면 인원별 업무데이터와 참고 점수가 만들어집니다. 같은 달을 다시 올리면 그 달 데이터만 새로 바뀝니다. (입력한 점수는 그대로)</div>
+    <div class="fields" style="grid-template-columns:160px 1fr 1fr">
+      <div><label>평가월 (YYYY-MM)</label><input type="text" id="upMonth" value="${esc(STATE.month)}"></div>
+      <div><label>① 업무통계 엑셀 (예: 업무통계 (조립팀).xlsx)</label><input type="file" id="upWork" accept=".xlsx,.xlsm,.xls"><select id="upWorkSheet" class="hidden" style="margin-top:6px"></select></div>
+      <div><label>② 사고 엑셀 (선택, 예: 2026년 사고리스트.xlsx)</label><input type="file" id="upAcc" accept=".xlsx,.xlsm,.xls"><select id="upAccSheet" class="hidden" style="margin-top:6px"></select></div>
+    </div>
+    <div id="upPreview" style="margin-top:12px"></div>
+    <div class="actions"><button class="primary" id="upBtn" disabled>올리기</button></div></div>`;
+  const books = {};
+  const setup = (fileSel, sheetSel, key, prefer) => {
+    $(fileSel).onchange = async e => {
+      const f = e.target.files[0]; if (!f) return;
+      try {
+        const wb = XLSX.read(await f.arrayBuffer(), { type: 'array', cellDates: true });
+        books[key] = wb;
+        const s = $(sheetSel); s.classList.remove('hidden');
+        const def = wb.SheetNames.find(n => prefer.some(p => n.includes(p))) || wb.SheetNames[0];
+        s.innerHTML = wb.SheetNames.map(n => `<option ${n === def ? 'selected' : ''}>${esc(n)}</option>`).join('');
+        s.onchange = preview; preview();
+      } catch (err) { toast('파일을 읽지 못했습니다: ' + err.message, 1); }
+    };
+  };
+  let merged = null;
+  const preview = () => {
+    merged = null; $('#upBtn').disabled = true;
+    const box = $('#upPreview');
+    try {
+      if (!books.work) { box.innerHTML = '<div class="muted">업무통계 엑셀을 선택하세요.</div>'; return; }
+      const w = parseWork(books.work.Sheets[$('#upWorkSheet').value]);
+      let accInfo = '';
+      if (books.acc) {
+        const a = parseAcc(books.acc.Sheets[$('#upAccSheet').value]);
+        Object.keys(a.rows).forEach(k => {
+          if (!w.rows[k]) { w.rows[k] = { 이름: a.rows[k].이름, 품질지적: 0, 미발송: 0, 오발송: 0, 오조립: 0, 파손: 0 }; w.order.push(k); }
+          ['품질지적', '미발송', '오발송', '오조립', '파손'].forEach(t => w.rows[k][t] = a.rows[k][t] || 0);
+          if (a.rows[k].지시불이행) w.rows[k].지시불이행 = Math.max(w.rows[k].지시불이행 || 0, a.rows[k].지시불이행);
+        });
+        accInfo = ` · 사고 ${a.count}건 (${Object.keys(a.rows).length}명)`;
+      }
+      merged = w.order.map(k => w.rows[k]);
+      const sample = merged.slice(0, 8);
+      box.innerHTML = `<div class="banner info">인원 ${merged.length}명 읽음${accInfo}. 아래는 앞부분 미리보기입니다.</div>
+        <div class="scroll"><table><tr><th>이름</th><th>그룹</th><th>평가평균</th><th>총량</th><th>목표</th><th>근무일</th><th>지각</th><th>조퇴</th><th>결근</th><th>품질지적</th><th>미/오발송</th><th>오조립</th><th>파손</th></tr>
+        ${sample.map(r => `<tr><td>${esc(r.이름)}</td><td>${esc(r.원본그룹)}</td><td>${f1(r.평가평균, 2)}</td><td>${f1(r.총량)}</td><td>${dash(r.목표수량)}</td><td>${dash(r.근무일수)}</td><td>${dash(r.지각)}</td><td>${dash(r.조퇴)}</td><td>${dash(r.결근)}</td><td>${r.품질지적}</td><td>${(r.미발송 || 0) + (r.오발송 || 0)}</td><td>${r.오조립}</td><td>${r.파손}</td></tr>`).join('')}</table></div>`;
+      $('#upBtn').disabled = false;
+    } catch (err) { box.innerHTML = `<div class="banner lock">${esc(err.message)}</div>`; }
+  };
+  setup('#upWork', '#upWorkSheet', 'work', ['업무데이터', '업무']);
+  setup('#upAcc', '#upAccSheet', 'acc', ['사고']);
+  $('#upBtn').onclick = async () => {
+    const month = $('#upMonth').value.trim();
+    if (!/^\d{4}-\d{2}$/.test(month)) { toast('평가월은 2026-10 형식으로 입력하세요', 1); return; }
+    if (!merged) return;
+    if (!confirm(`${month} 업무데이터 ${merged.length}명을 올립니다. 이 달에 이미 올린 데이터가 있으면 새 데이터로 바뀝니다.`)) return;
+    try {
+      const r = await api('upload', { month, rows: merged });
+      $('#upPreview').innerHTML = `<div class="banner info">${r.month} 올리기 완료 · ${r.count}명</div>` +
+        (r.missing.length ? `<div class="banner warn">명단에는 있는데 업무데이터에 없는 인원 ${r.missing.length}명: ${r.missing.map(esc).join(', ')}<br>이름이 다르게 적혀 있으면 명단의 "원본이름" 칸에 업무데이터의 이름을 적어주세요.</div>` : '');
+      META = (await api('login')).meta; STATE.month = month; buildMonthSel();
+      toast('올리기 완료');
+    } catch (e) { toast(e.message, 1); }
+  };
+}
+
+/* =====================================================================
+   관리자 — 기준 설정 / 명단·파트 (편집 표)
+   ===================================================================== */
+let CFG = null;
+async function loadCfg() { CFG = await api('getConfig'); return CFG; }
+
+const COL_OPTS = {
+  '사용': ['Y', 'N'], '계산방식': ['목표수량', '성장', '순위표', '품질감점', '근태감점', '수동'], '합산': ['더하기', '빼기'], '대상': ['전체', '사원', '파트장'],
+  '직책': ['사원', '파트장'], '등급': ['', 'A', 'B', 'C', 'D'], '구분@감점기준': ['품질', '근태']
+};
+
+function rowHtml(table, r, opts = {}) {
+  const cols = opts.cols || CFG.headers[table];
+  const cell = h => {
+    let o = COL_OPTS[h + '@' + table] || COL_OPTS[h];
+    if (h === '파트' && table === '명단') o = ['', ...CFG['파트'].map(p => p['파트'])];
+    const v = r[h] === undefined ? '' : r[h];
+    const w = (opts.w && opts.w[h]) || 90;
+    if (opts.readonly && opts.readonly.includes(h)) return `<td><input type="text" data-h="${h}" value="${esc(v)}" readonly style="background:#f7f7f7;width:${w}px"></td>`;
+    if (o) return `<td><select data-h="${h}">${[...new Set([...o, v])].map(x => `<option ${String(x) === String(v) ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></td>`;
+    return `<td><input type="text" data-h="${h}" value="${esc(v)}" style="width:${w}px"></td>`;
+  };
+  return `<tr>${cols.map(cell).join('')}${opts.fixed ? '' : '<td><button class="small danger" data-del>삭제</button></td>'}</tr>`;
+}
+
+function editTable(table, rows, opts = {}) {
+  const cols = opts.cols || CFG.headers[table];
+  return `<div class="scroll"><table class="edit" id="ed_${table}"><tr>${cols.map(h => `<th>${esc(h)}</th>`).join('')}${opts.fixed ? '' : '<th></th>'}</tr>
+    ${rows.map(r => rowHtml(table, r, opts)).join('')}</table></div>
+  ${opts.fixed ? '' : `<button class="small" data-add="${table}" style="margin-top:6px">+ 줄 추가</button>`}`;
+}
+
+function wireTable(table, opts = {}) {
+  const t = $('#ed_' + table);
+  const bindDel = root => root.querySelectorAll('[data-del]').forEach(b => b.onclick = () => b.closest('tr').remove());
+  bindDel(t);
+  const add = document.querySelector(`[data-add="${table}"]`);
+  if (add) add.onclick = () => {
+    const tb = t.tBodies[0] || t;
+    tb.insertAdjacentHTML('beforeend', rowHtml(table, opts.blank || {}, opts));
+    bindDel(tb.lastElementChild);
+    const f = tb.lastElementChild.querySelector('input'); if (f) f.focus();
+  };
+}
+
+function readTable(table, opts = {}) {
+  const cols = opts.cols || CFG.headers[table];
+  const H = CFG.headers[table];
+  const orig = opts.keep ? CFG[table] : [];
+  return [...$('#ed_' + table).querySelectorAll('tr')].slice(1).map((tr, i) => {
+    const o = {}; H.forEach(h => o[h] = (orig[i] && orig[i][h]) || '');
+    tr.querySelectorAll('[data-h]').forEach(el => o[el.dataset.h] = el.value.trim());
+    return o;
+  });
+}
+
+async function saveTable(table, rows) {
+  try { await api('saveConfig', { table, rows }); toast(table + ' 저장 완료'); await loadCfg(); META = (await api('login')).meta; return true; }
+  catch (e) { toast(e.message, 1); return false; }
+}
+
+async function viewConfig() {
+  const main = $('#main');
+  main.innerHTML = '<div class="card muted">불러오는 중…</div>';
+  try { await loadCfg(); } catch (e) { toast(e.message, 1); return; }
+  const st = {}; CFG['설정'].forEach(r => st[r['항목']] = r['값']);
+  main.innerHTML = `
+  <div class="card"><h2>평가 항목 (최대 10칸)</h2>
+    <div class="banner info">인사평가표에 들어가는 항목입니다. 칸 번호는 엑셀 데이터의 "점수1~점수10"과 연결되니 <b>이미 쓰고 있는 항목의 번호는 바꾸지 말고</b>, 새 항목은 빈 번호(사용 N)를 켜서 쓰세요.<br>
+    계산방식 — <b>목표수량</b>: 등급별 목표 대비 (기본점 + (일평균−목표)÷단위×단위점수) · <b>성장</b>: 전월 대비 (기본점 + (이번달−전월)÷단위×단위점수) · <b>순위표</b>: 파트 내 총수량 순위 → 아래 점유율표 · <b>품질감점</b>: 기본점(없으면 배점) − 사고건수×감점 · <b>근태감점</b>: 지각·조퇴·결근×감점 (합산 "빼기") · <b>수동</b>: 참고 점수 없이 매니저 판단.<br>
+    최소·최대로 점수 범위를 제한합니다. 대상에서 사원/파트장만 따로 적용할 수 있습니다. 추가평가(가점)는 엑셀에서 입력하므로 여기 넣지 않습니다.</div>
+    ${editTable('항목', CFG['항목'], { fixed: true, readonly: ['번호'], w: { 번호: 34, 구분: 70, 항목명: 120, 배점: 44, 평가기준: 320, 기본점: 50, 단위: 44, 단위점수: 50, 최소: 40, 최대: 40 } })}
+    <div class="actions"><button class="primary" id="svItems">항목 저장</button></div></div>
+  <div class="row" style="align-items:flex-start;gap:12px">
+    <div class="card" style="flex:1;min-width:280px"><h2>등급별 목표수량</h2><div class="muted" style="margin-bottom:6px">명단의 등급에 따라 "목표수량" 계산과 월 목표에 쓰입니다.</div>
+      ${editTable('등급목표', CFG['등급목표'], { w: { 등급: 50, 목표수량: 70, 설명: 150 } })}<div class="actions"><button class="primary" id="svGrade">저장</button></div></div>
+    <div class="card" style="flex:1;min-width:260px"><h2>점유율표 (파트 내 순위 → 점수)</h2>
+      ${editTable('점유율표', CFG['점유율표'], { w: { 순위부터: 60, 순위까지: 60, 점수: 60 } })}<div class="actions"><button class="primary" id="svRank">저장</button></div></div>
+    <div class="card" style="flex:1;min-width:260px"><h2>감점 기준</h2><div class="muted" style="margin-bottom:6px">항목 이름은 품질지적·지시불이행·미발송·오발송·오조립·파손·지각·조퇴·결근 중 하나</div>
+      ${editTable('감점기준', CFG['감점기준'], { w: { 항목: 90, 감점: 50 } })}<div class="actions"><button class="primary" id="svDed">저장</button></div></div>
+  </div>
+  <div class="card"><h2>기본 설정</h2>
+    <div class="fields" style="grid-template-columns:160px 1fr 200px">
+      <div><label>현재 평가월 (YYYY-MM)</label><input type="text" id="stMonth" value="${esc(st['현재평가월'] || '')}"></div>
+      <div><label>관리자 목록 (월간 총평 "관리자" 선택, 쉼표로 구분)</label><input type="text" id="stMgr" value="${esc(st['관리자명단'] || '')}"></div>
+      <div><label>관리자 비밀번호</label><input type="password" id="stPw" value="${esc(st['관리자비밀번호'] || '')}"></div>
+    </div><div class="actions"><button class="primary" id="svSet">저장</button></div></div>`;
+  wireTable('등급목표'); wireTable('점유율표'); wireTable('감점기준');
+  $('#svItems').onclick = () => saveTable('항목', readTable('항목'));
+  $('#svGrade').onclick = () => saveTable('등급목표', readTable('등급목표'));
+  $('#svRank').onclick = () => saveTable('점유율표', readTable('점유율표'));
+  $('#svDed').onclick = () => saveTable('감점기준', readTable('감점기준'));
+  $('#svSet').onclick = async () => {
+    const m = $('#stMonth').value.trim();
+    if (!/^\d{4}-\d{2}$/.test(m)) { toast('평가월은 2026-10 형식으로 입력하세요', 1); return; }
+    const pw = $('#stPw').value;
+    const rows = [['관리자비밀번호', pw, '반드시 바꿔주세요'], ['현재평가월', m, '매니저 화면에 기본으로 열리는 월 (YYYY-MM)'], ['관리자명단', $('#stMgr').value, '월간 총평 "관리자" 선택 목록 (쉼표로 구분)']].map(([a, b, c]) => ({ 항목: a, 값: b, 설명: c }));
+    if (await saveTable('설정', rows)) { AUTH.pw = pw; try { sessionStorage.setItem('auth', JSON.stringify(AUTH)); } catch (e) {} }
+  };
+}
+
+async function viewRoster() {
+  const main = $('#main');
+  main.innerHTML = '<div class="card muted">불러오는 중…</div>';
+  try { await loadCfg(); } catch (e) { toast(e.message, 1); return; }
+  main.innerHTML = `
+  <div class="card"><h2>명단 (파트장·사원)</h2>
+    <div class="banner info">등급을 바꾸면 그 사람의 목표수량이 바로 바뀝니다. 업무데이터에 이름이 다르게 적혀 있으면(예: 정 준 ↔ 정준) "원본이름"에 업무데이터의 이름을 적어주세요. 퇴사·계약직 등 평가하지 않는 인원은 "사용"을 N으로 두면 목록에서 빠지고 기록은 남습니다.</div>
+    ${editTable('명단', CFG['명단'], { w: { 이름: 80, 원본이름: 80, 비고: 120 }, blank: { 사용: 'Y', 직책: '사원' } })}
+    <div class="actions"><button class="primary" id="svRoster">명단 저장</button></div></div>
+  <div class="card"><h2>파트 · 비밀번호</h2>
+    <div class="banner warn">매니저는 파트를 고르고 이 비밀번호로 들어옵니다. 처음 넣어둔 비밀번호(1111 등)는 꼭 바꿔서 매니저에게 따로 알려주세요.</div>
+    ${editTable('파트', CFG['파트'], { w: { 파트: 80, 비밀번호: 90, 담당매니저: 80, 순서: 40 } })}
+    <div class="actions"><button class="primary" id="svPart">파트 저장</button></div></div>`;
+  wireTable('명단', { blank: { 사용: 'Y', 직책: '사원' } }); wireTable('파트');
+  $('#svRoster').onclick = () => saveTable('명단', readTable('명단'));
+  $('#svPart').onclick = () => saveTable('파트', readTable('파트'));
+}
+
+/* =====================================================================
+   관리자 — 마감·다운로드
+   ===================================================================== */
+const EXPORT_COLS = ['No', '이름', '파트', '직책', '등급', '평가월', ...Array.from({ length: SLOTS }, (_, i) => '점수' + (i + 1)), '합계', '관리자', '월목표', '결과', '달성률',
+  '업무평가', '건강관리', '특이사항', '총수량', '총수량순위', '일평균', '평균순위', '개인목표', '전월평균', '근무일수', '당일연차', '지각', '조퇴', '결근',
+  '품질지적', '지시불이행', '미오발송', '오조립', '파손', '상태'];
+
+function viewClose() {
+  const main = $('#main');
+  const lk = META.locks || {};
+  main.innerHTML = `
+  <div class="card"><h2>월 마감</h2>
+    <div class="muted" style="margin-bottom:8px">마감하면 매니저는 그 달 점수를 고칠 수 없고, 관리자만 고칠 수 있습니다. 필요하면 다시 풀 수 있습니다.</div>
+    <table style="max-width:520px"><tr><th>평가월</th><th>상태</th><th></th></tr>
+    ${(META.months || []).map(m => `<tr><td>${m}</td><td>${lk[m] ? '🔒 마감' : '열림'}</td><td><button class="small ${lk[m] ? '' : 'primary'}" data-lock="${m}" data-v="${lk[m] ? 0 : 1}">${lk[m] ? '마감 해제' : '마감하기'}</button></td></tr>`).join('')}</table></div>
+  <div class="card"><h2>엑셀 다운로드</h2>
+    <div class="banner info">인사보고 엑셀(마스터)에 넣을 파일입니다. "데이터" 시트에 인원별 점수·총평·업무데이터가, "항목설정" 시트에 점수1~10이 어떤 항목인지가 들어갑니다. 받은 파일을 입력파일 폴더에 넣고 인사보고 파일에서 새로고침하세요.</div>
+    <div class="row"><select id="dlMonth" style="width:auto">${(META.months || []).map(m => `<option ${m === STATE.month ? 'selected' : ''}>${m}</option>`).join('')}</select>
+      <button class="primary" id="dlBtn">이 달 엑셀 받기</button><button id="dlAll">전체 기록 받기</button></div></div>`;
+  main.querySelectorAll('[data-lock]').forEach(b => b.onclick = async () => {
+    const m = b.dataset.lock, v = b.dataset.v === '1';
+    if (!confirm(`${m} 을(를) ${v ? '마감' : '마감 해제'}할까요?`)) return;
+    try { await api('setLock', { month: m, locked: v }); META = (await api('login')).meta; buildMonthSel(); viewClose(); toast(v ? '마감했습니다' : '마감을 풀었습니다'); } catch (e) { toast(e.message, 1); }
+  });
+  $('#dlBtn').onclick = () => downloadMonth($('#dlMonth').value);
+  $('#dlAll').onclick = downloadAll;
+}
+
+async function downloadMonth(month) {
+  let d; try { d = await api('getAll', { month }); } catch (e) { toast(e.message, 1); return; }
+  const rows = d.list.map((x, i) => {
+    const r = x.rec || {}, dt = x.data;
+    const o = { No: i + 1, 이름: x.person.name, 파트: x.person.part, 직책: x.person.role, 등급: x.person.grade, 평가월: month };
+    for (let k = 1; k <= SLOTS; k++) o['점수' + k] = r['점수' + k] === undefined ? '' : r['점수' + k];
+    o.합계 = r['합계'] ?? '';
+    o.관리자 = r['관리자'] || '';
+    o.월목표 = dt.개인목표 ?? ''; o.결과 = dt.일평균 === null ? '' : Math.round(dt.일평균 * 100) / 100; o.달성률 = dt.달성률 === null ? '' : Math.round(dt.달성률 * 1000) / 1000;
+    o.업무평가 = [r['업무평가1'], r['업무평가2']].filter(Boolean).join('\n'); o.건강관리 = r['건강관리'] || ''; o.특이사항 = r['특이사항'] || '';
+    const rd = (v, n) => v === null || v === undefined ? '' : Math.round(v * 10 ** n) / 10 ** n;
+    o.총수량 = rd(dt.총수량, 1); o.총수량순위 = dt.총수량순위 ?? ''; o.일평균 = rd(dt.일평균, 2); o.평균순위 = dt.평균순위 ?? ''; o.개인목표 = dt.개인목표 ?? ''; o.전월평균 = rd(dt.전월평균, 2);
+    ['근무일수', '당일연차', '지각', '조퇴', '결근', '품질지적', '지시불이행', '미오발송', '오조립', '파손'].forEach(k => o[k] = dt[k] ?? '');
+    o.상태 = r['상태'] || '미작성';
+    return o;
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows, { header: EXPORT_COLS });
+  ws['!cols'] = EXPORT_COLS.map(h => ({ wch: ['업무평가', '건강관리', '특이사항'].includes(h) ? 40 : h.length < 4 ? 8 : 11 }));
+  XLSX.utils.book_append_sheet(wb, ws, '데이터');
+  const items = d.items.map(it => ({ 칸: '점수' + it.no, 사용: it.use ? 'Y' : 'N', 구분: it.group, 항목명: it.name, 배점: it.max, 합산: it.sign < 0 ? '빼기' : '더하기', 평가기준: it.desc }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(items), '항목설정');
+  const [y, m] = month.split('-');
+  XLSX.writeFile(wb, `인사평가_${y.slice(2)}년${+m}월.xlsx`);
+}
+
+async function downloadAll() {
+  let all; try { all = await api('exportAll'); } catch (e) { toast(e.message, 1); return; }
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(all.map(r => { const o = Object.assign({}, r); delete o._row; delete o['항목설정']; return o; })), '평가기록');
+  XLSX.writeFile(wb, '인사평가_전체기록.xlsx');
+}
+
+/* =====================================================================
+   관리자 — 기록 가져오기 (9월까지 인사보고 파일)
+   ===================================================================== */
+function viewImport() {
+  const main = $('#main');
+  main.innerHTML = `<div class="card"><h2>지난 기록 가져오기</h2>
+    <div class="banner info">9월까지 쓰던 인사보고 엑셀(조립팀_인사평가.xlsm)의 "데이터_이력" 시트를 읽어서, 월별 총점·항목 점수·일평균·면담을 평가기록에 넣습니다. "구 기준"으로 표시되어 새 기준과 섞이지 않습니다. 이 기록이 있으면 10월 "전월평균"(성장 점수)과 1~12월 이력에 바로 쓰입니다.</div>
+    <div class="row" style="margin-bottom:10px"><b>가져올 기간</b><input type="text" id="imFrom" value="2025-10" style="width:110px"> ~ <input type="text" id="imTo" value="2026-09" style="width:110px"><span class="muted">(YYYY-MM)</span></div>
+    <input type="file" id="imFile" accept=".xlsx,.xlsm">
+    <label class="row" style="margin-top:10px"><input type="checkbox" id="imOver" style="width:auto"> 이미 있는 달·인원 기록도 덮어쓰기</label>
+    <div id="imPrev" style="margin-top:12px"></div>
+    <div class="actions"><button class="primary" id="imBtn" disabled>가져오기</button></div></div>`;
+  let rows = null;
+  $('#imFile').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const wb = XLSX.read(await f.arrayBuffer(), { type: 'array', cellDates: true });
+      const sn = wb.SheetNames.find(n => n.includes('데이터_이력'));
+      if (!sn) throw new Error('"데이터_이력" 시트가 없습니다');
+      const aoa = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: '' });
+      const hr = findHeader(aoa, ['이름', '평가월']);
+      if (hr < 0) throw new Error('제목 줄을 찾지 못했습니다');
+      const hdr = aoa[hr].map(normH);
+      const find = pre => hdr.findIndex(h => h.startsWith(pre));
+      const ix = { 이름: find('이름'), 조립능력: find('조립능력'), 조립점유율: find('조립점유율'), 조립품질: find('조립품질'), 근태개인관리: find('근태'), 소계: find('소계'),
+        업무내용: find('업무내용'), 건강관리: find('건강관리'), 특이사항: find('특이사항'), 그룹: find('그룹'), 평가월: find('평가월'), 총수량: find('총수량'),
+        총수량순위: find('총수량순위'), 일평균: find('일평균'), 일평균순위: find('일평균순위'), 개인목표: find('개인목표'), 달성율: find('달성율'),
+        품질지적: find('품질지적'), 지시불이행: find('지시불이행'), 미오발송: find('미오발송'), 오조립: find('오조립'), 파손: find('파손'),
+        근무일수: find('근무일수'), 당일연차: find('당일연차'), 지각: find('지각'), 조퇴: find('조퇴') };
+      rows = [];
+      for (let r = hr + 1; r < aoa.length; r++) {
+        const a = aoa[r]; if (!a[ix.이름]) continue;
+        const o = {};
+        Object.keys(ix).forEach(k => { if (ix[k] >= 0) { let v = a[ix[k]]; if (v instanceof Date) v = `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, '0')}`; o[k] = v; } });
+        if (typeof o.평가월 === 'number') { const dt = new Date(Math.round((o.평가월 - 25569) * 86400000)); o.평가월 = `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}`; }
+        rows.push(o);
+      }
+      const mFrom = $('#imFrom').value.trim() || '0000-00', mTo = $('#imTo').value.trim() || '9999-99';
+      rows = rows.filter(r => r.평가월 >= mFrom && r.평가월 <= mTo);
+      const byM = {}; rows.forEach(r => byM[r.평가월] = (byM[r.평가월] || 0) + 1);
+      $('#imPrev').innerHTML = `<div class="banner info">${rows.length}줄 읽음</div><table style="max-width:420px"><tr><th>평가월</th><th>인원</th></tr>${Object.keys(byM).sort().map(m => `<tr><td>${esc(m)}</td><td>${byM[m]}</td></tr>`).join('')}</table>`;
+      $('#imBtn').disabled = false;
+    } catch (err) { $('#imPrev').innerHTML = `<div class="banner lock">${esc(err.message)}</div>`; }
+  };
+  $('#imBtn').onclick = async () => {
+    if (!rows) return;
+    if (!confirm(`${rows.length}줄을 평가기록에 넣을까요?`)) return;
+    try { const r = await api('importHistory', { rows, overwrite: $('#imOver').checked }); $('#imPrev').innerHTML = `<div class="banner info">완료 · 추가 ${r.added} · 덮어씀 ${r.updated} · 건너뜀 ${r.skipped}</div>`; META = (await api('login')).meta; buildMonthSel(); }
+    catch (e) { toast(e.message, 1); }
+  };
+}
+
+/* =====================================================================
+   관리자 — 수정기록
+   ===================================================================== */
+async function viewLog() {
+  const main = $('#main');
+  let l; try { l = await api('log', { month: STATE.month }); } catch (e) { toast(e.message, 1); return; }
+  main.innerHTML = `<div class="card"><h2>수정기록 · ${esc(STATE.month)} (최근 500건)</h2><div class="scroll"><table>
+    <tr><th>시각</th><th>작성자</th><th>이름</th><th>칸</th><th>이전값</th><th>새값</th></tr>
+    ${l.map(r => `<tr><td class="muted">${esc(r['시각'])}</td><td>${esc(r['작성자'])}</td><td>${esc(r['이름'])}</td><td>${esc(r['칸'])}</td><td>${esc(r['이전값'])}</td><td>${esc(r['새값'])}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">기록이 없습니다</td></tr>'}
+  </table></div></div>`;
+}
+
+/* =====================================================================
+   시작
+   ===================================================================== */
+$('#loginBtn').onclick = () => doLogin(false);
+$('#loginPw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(false); });
+$('#logoutBtn').onclick = logout;
+$('#monthSel').onchange = async e => {
+  const v = e.target.value; e.target.value = STATE.month;
+  if (!(await guard())) return;
+  STATE.dirty = false; STATE.month = v; e.target.value = v; STATE.sel = null; go(STATE.tab);
+};
+window.addEventListener('beforeunload', e => { if (STATE.dirty) { e.preventDefault(); e.returnValue = ''; } });
+initLogin();
+</script>
+</body>
+</html>
