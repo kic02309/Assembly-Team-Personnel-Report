@@ -232,6 +232,53 @@ table.strip td.lab.b{background:#1f6fb2}table.strip td.lab.o{background:#d1662b}
 .sortsw button:first-child{border-radius:6px 0 0 6px}.sortsw button:last-child{border-radius:0 6px 6px 0;border-left:none}
 .sortsw button.on{background:#1f3a5f;color:#fff;border-color:#1f3a5f}
 @media print{.top,.no-print{display:none!important}.overlay{position:static;background:none;padding:0}.modal{box-shadow:none;padding:0}}
+
+/* ===== 24인치 화면용: 넓게 + 본문 글씨 한 단계 작게 (메뉴·큰 버튼은 그대로) ===== */
+.wrap{max-width:1880px}
+html,body{font-size:13.5px}
+.tabs button{font-size:15px}
+.top select{font-size:15px}
+button.primary,button.green,#saveDone{font-size:14.5px}
+button.small{font-size:12px}
+.muted{font-size:12px}
+.card h2{font-size:15.5px}
+th{font-size:12.5px}
+.score td{font-size:13px}
+.score .why{font-size:11.5px}
+.kv div{font-size:12.5px}
+.banner{font-size:12.5px}
+.steps div{font-size:13px}
+.pitem .nm{font-size:14px}
+table.sum{font-size:13px} table.sum th{font-size:12px} table.sum td.sc{font-size:14px}
+table.strip td{font-size:12.5px}
+.fields label,.memo label{font-size:11.5px}
+#main input[type=text],#main input[type=number],#main select,#main textarea{font-size:13px}
+#ed_항목{width:100%}
+#ed_항목 textarea{min-width:260px;overflow:hidden}
+#ed_항목 td,#ed_항목 th{padding:4px 3px;white-space:nowrap}
+#ed_항목 th:nth-child(6){width:100%}
+#ed_항목 select{padding-left:4px;padding-right:18px;background-position:right 4px center}
+#ed_항목 select[data-h="사용"],#ed_항목 select[data-h="합산"],#ed_항목 select[data-h="계산방식"],#ed_항목 select[data-h="대상"]{width:auto;min-width:0}
+/* 기준 설정 표: 12px */
+table.edit th,table.edit td{font-size:12px}
+table.edit input,table.edit select,table.edit textarea{font-size:12px;padding:4px 6px}
+table.edit select{padding-right:22px;background-position:right 6px center}
+/* 편집 표: 숫자·등급·항목은 가운데, 평가기준·설명·비고는 왼쪽 */
+table.edit input,table.edit select{text-align:center;text-align-last:center}
+table.edit th{text-align:center}
+table.edit td{text-align:center}
+table.edit textarea,table.edit input[data-h="평가기준"],table.edit input[data-h="설명"],table.edit input[data-h="비고"]{text-align:left;text-align-last:left}
+table.edit textarea{min-height:0;resize:vertical;line-height:1.35;overflow:hidden}
+.cfg-grid{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:14px;align-items:start}
+@media (max-width:1300px){.cfg-grid{grid-template-columns:1fr}}
+.guide{border:1px solid #c9d6e6;border-radius:8px;background:#f7fafd;padding:10px 12px;font-size:12px;position:sticky;top:70px}
+.guide h3{margin:0 0 8px;font-size:13.5px}
+.guide .m{border-left:4px solid transparent;padding:6px 8px;margin:0 0 6px;border-radius:4px;background:#fff}
+.guide .m b{color:#1f3a5f}
+.guide .m .ex{color:#4a5561;margin-top:2px}
+.guide .m.on{border-left-color:#ffb300;background:#fff8e1}
+.guide .note{border-top:1px dashed #c9d6e6;margin-top:8px;padding-top:8px;color:#4a5561}
+table.edit tr.sel td{background:#fff8e1}
 </style>
 </head>
 <body>
@@ -960,6 +1007,25 @@ async function saveTable(table, rows) {
   catch (e) { toast(e.message, 1); return false; }
 }
 
+
+// 기준 설정 오른쪽 설명서
+function calcGuide() {
+  return `<div class="guide"><h3>계산방식 설명서</h3>
+    <div class="m" data-m="목표수량"><b>목표수량</b> — 등급 목표 대비 일평균<br>기본점 + (일평균 − 등급목표) ÷ 단위 × 단위점수 (소수 버림)
+      <div class="ex">예) A등급 목표 16대, 일평균 18.18대 → 초과 2.18÷0.5=4 → 32+4 = <b>36점</b><br>일평균 15.2대 → 부족 0.8÷0.5=1 → 32−1 = <b>31점</b></div></div>
+    <div class="m" data-m="성장"><b>성장</b> — 전월 대비 일평균 변화<br>기본점 + (이번달 − 전월) ÷ 단위 × 단위점수
+      <div class="ex">예) 전월 17.0 → 이번달 18.2대: +1.2÷0.5=2 → 5+2 = <b>7점</b><br>전월 기록이 없으면 기본점(5점)</div></div>
+    <div class="m" data-m="순위표"><b>순위표</b> — 파트 안 총수량 순위 → 아래 "점유율표"에서 점수
+      <div class="ex">예) 1그룹에서 3위 → 3~4위 = <b>9점</b></div></div>
+    <div class="m" data-m="품질감점"><b>품질감점</b> — 기본점(없으면 배점) − 사고건수 × 감점<br>감점은 아래 "감점 기준"의 품질 줄
+      <div class="ex">예) 오조립 1건, 품질지적 1건 → 30 − 3 − 2 = <b>25점</b></div></div>
+    <div class="m" data-m="근태감점"><b>근태감점</b> — 조퇴·지각·결근 × 감점, 합산 "빼기"로 총점에서 뺌
+      <div class="ex">예) 지각 1, 조퇴 1 → 5 + 2 = <b>−7점</b></div></div>
+    <div class="m" data-m="수동"><b>수동</b> — 자동 계산 없음, 매니저가 직접 판단해 입력
+      <div class="ex">예) 환경정리평가 0~10점</div></div>
+    <div class="note"><b>합산</b> 더하기=총점에 더함 / 빼기=총점에서 뺌<br><b>최소·최대</b> 참고 점수가 이 범위를 넘지 않음<br><b>대상</b> 전체 / 사원 / 파트장 — 해당 직책에만 항목 적용<br><b>사용</b> N이면 평가표에서 숨김<br>참고 점수는 추천값이며 매니저가 고칠 수 있습니다. 기준은 그 달 평가 시작 전에 바꾸세요.</div></div>`;
+}
+
 async function viewConfig() {
   const main = $('#main');
   main.innerHTML = '<div class="card muted">불러오는 중…</div>';
@@ -967,10 +1033,10 @@ async function viewConfig() {
   const st = {}; CFG['설정'].forEach(r => st[r['항목']] = r['값']);
   main.innerHTML = `
   <div class="card"><h2>평가 항목 (최대 10칸)</h2>
-    <div class="banner info">인사평가표에 들어가는 항목입니다. 칸 번호는 엑셀 데이터의 "점수1~점수10"과 연결되니 <b>이미 쓰고 있는 항목의 번호는 바꾸지 말고</b>, 새 항목은 빈 번호(사용 N)를 켜서 쓰세요.<br>
-    계산방식 — <b>목표수량</b>: 등급별 목표 대비 (기본점 + (일평균−목표)÷단위×단위점수) · <b>성장</b>: 전월 대비 (기본점 + (이번달−전월)÷단위×단위점수) · <b>순위표</b>: 파트 내 총수량 순위 → 아래 점유율표 · <b>품질감점</b>: 기본점(없으면 배점) − 사고건수×감점 · <b>근태감점</b>: 지각·조퇴·결근×감점 (합산 "빼기") · <b>수동</b>: 참고 점수 없이 매니저 판단.<br>
-    최소·최대로 점수 범위를 제한합니다. 대상에서 사원/파트장만 따로 적용할 수 있습니다. 추가평가(가점)는 엑셀에서 입력하므로 여기 넣지 않습니다.</div>
-    ${editTable('항목', CFG['항목'], { fixed: true, readonly: ['번호'], w: { 번호: 34, 구분: 70, 항목명: 120, 배점: 44, 평가기준: 320, 기본점: 50, 단위: 44, 단위점수: 50, 최소: 40, 최대: 40 } })}
+    <div class="banner info">칸 번호는 저장 칸(점수1~10)과 연결되니 <b>이미 쓰는 항목의 번호는 바꾸지 말고</b>, 새 항목은 빈 번호(사용 N)를 Y로 바꿔 쓰세요. 줄을 누르면 오른쪽 설명서에 그 줄의 계산방식이 표시됩니다.</div>
+    <div class="cfg-grid"><div>
+    ${editTable('항목', CFG['항목'], { fixed: true, readonly: ['번호'], w: { 번호: 28, 사용: 50, 구분: 74, 항목명: 124, 배점: 40, 계산방식: 90, 합산: 70, 기본점: 44, 단위: 40, 단위점수: 44, 최소: 36, 최대: 36, 대상: 64 } })}
+    </div>${calcGuide()}</div>
     <div class="actions"><button class="primary" id="svItems">항목 저장</button></div></div>
   <div class="row" style="align-items:flex-start;gap:12px">
     <div class="card" style="flex:1;min-width:280px"><h2>등급별 목표수량</h2><div class="muted" style="margin-bottom:6px">명단의 등급에 따라 "목표수량" 계산과 월 목표에 쓰입니다.</div>
@@ -986,6 +1052,18 @@ async function viewConfig() {
       <div><label>관리자 목록 (월간 총평 "관리자" 선택, 쉼표로 구분)</label><input type="text" id="stMgr" value="${esc(st['관리자명단'] || '')}"></div>
       <div><label>관리자 비밀번호</label><input type="password" id="stPw" value="${esc(st['관리자비밀번호'] || '')}"></div>
     </div><div class="actions"><button class="primary" id="svSet">저장</button></div></div>`;
+  // 평가기준: 여러 줄 입력칸 (긴 문장 줄바꿈해서 전부 보이게)
+  $('#ed_항목').querySelectorAll('input[data-h="평가기준"]').forEach(inp => {
+    const ta = document.createElement('textarea'); ta.dataset.h = '평가기준'; ta.value = inp.value; ta.rows = 1;
+    const fit = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 2 + 'px'; };
+    ta.addEventListener('input', fit); inp.replaceWith(ta); requestAnimationFrame(fit);
+  });
+  const hiGuide = tr => {
+    $('#ed_항목').querySelectorAll('tr.sel').forEach(x => x.classList.remove('sel')); if (tr) tr.classList.add('sel');
+    const m = tr && tr.querySelector('[data-h="계산방식"]') ? tr.querySelector('[data-h="계산방식"]').value : '';
+    document.querySelectorAll('.guide .m').forEach(x => x.classList.toggle('on', x.dataset.m === m));
+  };
+  $('#ed_항목').querySelectorAll('tr').forEach((tr, i) => { if (!i) return; tr.addEventListener('focusin', () => hiGuide(tr)); tr.addEventListener('click', () => hiGuide(tr)); tr.addEventListener('change', () => hiGuide(tr)); });
   wireTable('등급목표'); wireTable('점유율표'); wireTable('감점기준');
   $('#svItems').onclick = () => saveTable('항목', readTable('항목'));
   $('#svGrade').onclick = () => saveTable('등급목표', readTable('등급목표'));
