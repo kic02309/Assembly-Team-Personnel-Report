@@ -1036,7 +1036,8 @@ function viewClose() {
   <div class="card"><h2>엑셀 다운로드</h2>
     <div class="banner info">첫 시트 "인사평가현황"(보고 순서표 모양, 총점) + 인원별 "인사평가표" 시트(개선 양식에 웹 입력 내용 그대로, 1~12월 그래프 포함)가 들어갑니다. 가점은 받은 엑셀의 "미래성과평가" 칸에 적으면 총점에 자동 반영됩니다.</div>
     <div class="row"><select id="dlMonth" style="width:auto">${(META.months || []).map(m => `<option ${m === STATE.month ? 'selected' : ''}>${m}</option>`).join('')}</select>
-      <button class="primary" id="dlBtn">이 달 엑셀 받기</button><button id="dlAll">전체 기록 받기</button></div>
+      <button class="primary" id="dlBtn">이 달 엑셀 받기</button><button id="dlAll">전체 기록 받기</button>
+      <label class="row" style="gap:6px;margin-left:8px"><input type="checkbox" id="dlSide" checked style="width:auto"> 오른쪽 그래프·업무데이터 포함</label></div>
     <div style="margin-top:12px;padding:10px;border:1px dashed #8a96a3;border-radius:8px"><b>인적사항 파일 (선택)</b> <input type="file" id="dlInfo" accept=".xlsx,.xlsm" style="width:auto">
       <div class="muted" style="margin-top:4px">9월 최종 파일(조립팀_인사평가.xlsm) 또는 지난달 받은 엑셀을 넣으면 사진·휴대폰·주소·결혼유무·가족사항·담당업무를 사람별 평가표에 채웁니다.<br>이 파일은 이 컴퓨터 브라우저 안에서만 읽고, 서버나 인터넷에 올리지 않습니다. 안 넣으면 인적사항은 빈칸입니다.</div></div></div>`;
   main.querySelectorAll('[data-lock]').forEach(b => b.onclick = async () => {
@@ -1122,7 +1123,9 @@ async function readInfoFile(file) {
 }
 
 // 엑셀 받기: 1) 인사평가현황(보고 순서표 모양, 총점)  2) 사람별 인사평가표(개선 양식, 값으로 채움 + 그래프 2개)
-async function buildWorkbook(month, items, list, order, hist, info) {
+async function buildWorkbook(month, items, list, order, hist, info, opts) {
+  const side = !opts || opts.side !== false;   // 오른쪽 그래프·업무데이터(P~Y) 포함 여부
+  const maxCol = side ? 25 : 14;
   if (!window.ExcelJS || !window.JSZip) throw new Error('엑셀 기능을 불러오지 못했습니다. 새로고침(Ctrl+F5) 후 다시 시도하세요.');
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(Uint8Array.from(atob(TPL_B64), c => c.charCodeAt(0)).buffer);
@@ -1192,7 +1195,7 @@ async function buildWorkbook(month, items, list, order, hist, info) {
     return d;
   };
   const copyRow = (ws, tr, r, keepVal) => {
-    for (let c = 1; c <= 25; c++) copyCell(ws, tr, c, r, c, keepVal);
+    for (let c = 1; c <= maxCol; c++) copyCell(ws, tr, c, r, c, keepVal);
     ws.getRow(r).height = tpl.getRow(tr).height;
   };
   const med = { style: 'medium' };
@@ -1209,9 +1212,9 @@ async function buildWorkbook(month, items, list, order, hist, info) {
     const nRows = plus.length + 1 + minus.length;          // 항목 + 가점 1줄
     const d = nRows - 7;                                   // 원본 양식은 9~15행(7줄)
     const name = sheetName(p.name);
-    const ws = wb.addWorksheet(name, { views: [{ showGridLines: false }] });
+    const ws = wb.addWorksheet(name, { views: [{ showGridLines: false }], properties: p.role === '파트장' ? { tabColor: { argb: 'FFFFC000' } } : {} });  // 파트장 시트 탭 색 (9월 파일과 같게)
     ws.pageSetup = cp(tpl.pageSetup); ws.pageSetup.printArea = undefined;
-    tpl.columns.forEach((col, i) => { const c = ws.getColumn(i + 1); c.width = col.width; if (col.hidden) c.hidden = true; });
+    tpl.columns.forEach((col, i) => { if (i >= maxCol) return; const c = ws.getColumn(i + 1); c.width = col.width; if (col.hidden) c.hidden = true; });
 
     // 1~8행: 인적사항·제목·머리줄
     for (let tr = 1; tr <= 8; tr++) copyRow(ws, tr, tr, true);
@@ -1224,7 +1227,7 @@ async function buildWorkbook(month, items, list, order, hist, info) {
         const cs = cp(tpl.getCell(9, 3).style) || {}; cs.border = { top: row === 9 ? med : thin, bottom: thin, left: thin, right: thin };
         ws.getCell(row, 3).style = cs; ws.getCell(row, 4).style = cp(cs);
       }
-      ws.mergeCells(row, 3, row, 4); ws.mergeCells(row, 6, row, 13);
+      ws.mergeCellsWithoutStyle(row, 3, row, 4); ws.mergeCellsWithoutStyle(row, 6, row, 13);
       ws.getCell(row, 3).value = it.name;
       ws.getCell(row, 5).value = isMinus ? '감점' : (num(it.max) ?? it.max);
       ws.getCell(row, 6).value = it.desc;
@@ -1238,11 +1241,11 @@ async function buildWorkbook(month, items, list, order, hist, info) {
       g.items.forEach((it, i) => itemRow(it, i === 0 ? 9 : 10, false));
       for (let c = 2; c <= 14; c++) { const cell = ws.getCell(row - 1, c); cell.border = Object.assign({}, cell.border, { bottom: med }); }
       ws.getCell(r0, 2).value = g.name; ws.getCell(r0, 2).style = Object.assign(cp(tpl.getCell(9, 2).style), { border: { left: med, right: thin, top: med, bottom: med } });
-      if (row - 1 > r0) ws.mergeCells(r0, 2, row - 1, 2);
+      if (row - 1 > r0) ws.mergeCellsWithoutStyle(r0, 2, row - 1, 2);
     });
     // 가점 줄 (엑셀에서 직접 입력)
     copyRow(ws, 14, row, false);
-    ws.mergeCells(row, 3, row, 4); ws.mergeCells(row, 6, row, 13);
+    ws.mergeCellsWithoutStyle(row, 3, row, 4); ws.mergeCellsWithoutStyle(row, 6, row, 13);
     ws.getCell(row, 2).value = '추가평가'; ws.getCell(row, 3).value = '미래성과평가'; ws.getCell(row, 5).value = '가점';
     ws.getCell(row, 6).value = '신규 서비스 개발 및 개선, 업무 프로세스 개선, 업무 지식 공유 및 업데이트';
     ws.getRow(row).height = 33; row++;
@@ -1252,7 +1255,7 @@ async function buildWorkbook(month, items, list, order, hist, info) {
 
     // 16행 이후: 총점·이력·총평 (d줄만큼 밀어서 복사)
     for (let tr = 16; tr <= 26; tr++) copyRow(ws, tr, tr + d, true);
-    tplMerges.forEach(a => { const q = parseR(a); if (!q) return; if (q.r2 <= 8) ws.mergeCells(a); else if (q.r1 >= 16) ws.mergeCells(`${q.c1}${q.r1 + d}:${q.c2}${q.r2 + d}`); });
+    tplMerges.forEach(a => { const q = parseR(a); if (!q) return; if (q.r2 <= 8) ws.mergeCellsWithoutStyle(a); else if (q.r1 >= 16) ws.mergeCellsWithoutStyle(`${q.c1}${q.r1 + d}:${q.c2}${q.r2 + d}`); });
     // 데이터 확인(목록) L1, L4
     ws.getCell('L1').dataValidation = { type: 'list', allowBlank: true, formulae: ['"정규직,계약직"'] };
     ws.getCell('L4').dataValidation = { type: 'list', allowBlank: true, formulae: ['"기 혼,미 혼"'] };
@@ -1300,17 +1303,18 @@ async function buildWorkbook(month, items, list, order, hist, info) {
 
     // 오른쪽 업무 데이터 (P~Y)
     const blk = [[o.총수량, o.총수량순위, o.일평균, o.개인목표, o.달성률], [o.근무일수, o.당일연차, o.지각, o.조퇴, o.결근], [o.품질지적, o.지시불이행, o.미오발송, o.오조립, o.파손]];
-    blk.forEach((vals, i) => vals.forEach((v, j) => {
+    if (side) blk.forEach((vals, i) => vals.forEach((v, j) => {
       const c = ws.getCell(rr + i, 17 + 2 * j);
       c.value = v === '' || v === null || v === undefined ? null : Number(v);
       c.numFmt = (i === 0 && j === 4) ? '0.0%' : (i === 0 && (j === 0 || j === 2)) ? '0.00' : '0;-0;"-"';
     }));
 
-    chartJobs.push({ name, r18: 18 + d, r19: 19 + d, r21: 21 + d });
+    if (side) chartJobs.push({ name, r18: 18 + d, r19: 19 + d, r21: 21 + d });
   });
   wb.removeWorksheet(tpl.id);
 
   const buf = await wb.xlsx.writeBuffer();
+  if (!chartJobs.length) return new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   return addCharts(buf, chartJobs);
 }
 
@@ -1319,7 +1323,7 @@ const CHART_NS = 'xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/char
 function chartXml(title, sheet, catRow, valRow, color, lblFmt, axFmt, scale) {
   const q = "'" + sheet.replace(/'/g, "''") + "'";
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><c:chartSpace ${CHART_NS}><c:roundedCorners val="0"/><c:chart><c:title><c:tx><c:rich><a:bodyPr/><a:p><a:pPr><a:defRPr sz="1200" b="1"/></a:pPr><a:r><a:rPr lang="ko-KR" sz="1200" b="1"/><a:t>${esc(title)}</a:t></a:r></a:p></c:rich></c:tx><c:overlay val="0"/></c:title><c:autoTitleDeleted val="0"/><c:plotArea><c:layout/><c:lineChart><c:grouping val="standard"/><c:varyColors val="0"/><c:ser><c:idx val="0"/><c:order val="0"/><c:spPr><a:ln w="22000"><a:solidFill><a:srgbClr val="${color}"/></a:solidFill></a:ln></c:spPr><c:marker><c:symbol val="circle"/><c:size val="5"/><c:spPr><a:solidFill><a:srgbClr val="${color}"/></a:solidFill><a:ln><a:solidFill><a:srgbClr val="${color}"/></a:solidFill></a:ln></c:spPr></c:marker><c:dLbls><c:numFmt formatCode="${esc(lblFmt)}" sourceLinked="0"/><c:spPr><a:noFill/><a:ln><a:noFill/></a:ln></c:spPr><c:dLblPos val="t"/><c:showLegendKey val="0"/><c:showVal val="1"/><c:showCatName val="0"/><c:showSerName val="0"/><c:showPercent val="0"/><c:showBubbleSize val="0"/></c:dLbls><c:cat><c:numRef><c:f>${esc(q)}!$C$${catRow}:$N$${catRow}</c:f></c:numRef></c:cat><c:val><c:numRef><c:f>${esc(q)}!$C$${valRow}:$N$${valRow}</c:f></c:numRef></c:val><c:smooth val="0"/></c:ser><c:marker val="1"/><c:axId val="10"/><c:axId val="100"/></c:lineChart><c:catAx><c:axId val="10"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/><c:numFmt formatCode="0&quot;월&quot;" sourceLinked="0"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="100"/><c:crosses val="autoZero"/><c:auto val="1"/><c:lblAlgn val="ctr"/><c:lblOffset val="100"/><c:noMultiLvlLbl val="0"/></c:catAx><c:valAx><c:axId val="100"/><c:scaling><c:orientation val="minMax"/>${scale}</c:scaling><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines><c:spPr><a:ln><a:solidFill><a:srgbClr val="DFE3E6"/></a:solidFill></a:ln></c:spPr></c:majorGridlines><c:numFmt formatCode="${esc(axFmt)}" sourceLinked="0"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="10"/><c:crosses val="autoZero"/><c:crossBetween val="between"/></c:valAx></c:plotArea><c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/></c:chart></c:chartSpace>`;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><c:chartSpace ${CHART_NS}><c:roundedCorners val="0"/><c:chart><c:title><c:tx><c:rich><a:bodyPr/><a:p><a:pPr><a:defRPr sz="1200" b="1"/></a:pPr><a:r><a:rPr lang="ko-KR" sz="1200" b="1"/><a:t>${esc(title)}</a:t></a:r></a:p></c:rich></c:tx><c:overlay val="0"/></c:title><c:autoTitleDeleted val="0"/><c:plotArea><c:layout/><c:lineChart><c:grouping val="standard"/><c:varyColors val="0"/><c:ser><c:idx val="0"/><c:order val="0"/><c:spPr><a:ln w="19080"><a:solidFill><a:srgbClr val="${color}"/></a:solidFill></a:ln></c:spPr><c:marker><c:symbol val="circle"/><c:size val="5"/><c:spPr><a:solidFill><a:srgbClr val="${color}"/></a:solidFill><a:ln><a:solidFill><a:srgbClr val="${color}"/></a:solidFill></a:ln></c:spPr></c:marker><c:dLbls><c:numFmt formatCode="${esc(lblFmt)}" sourceLinked="0"/><c:spPr><a:noFill/><a:ln><a:noFill/></a:ln></c:spPr><c:dLblPos val="t"/><c:showLegendKey val="0"/><c:showVal val="1"/><c:showCatName val="0"/><c:showSerName val="0"/><c:showPercent val="0"/><c:showBubbleSize val="0"/></c:dLbls><c:cat><c:numRef><c:f>${esc(q)}!$C$${catRow}:$N$${catRow}</c:f></c:numRef></c:cat><c:val><c:numRef><c:f>${esc(q)}!$C$${valRow}:$N$${valRow}</c:f></c:numRef></c:val><c:smooth val="0"/></c:ser><c:marker val="1"/><c:axId val="10"/><c:axId val="100"/></c:lineChart><c:catAx><c:axId val="10"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/><c:numFmt formatCode="0&quot;월&quot;" sourceLinked="0"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="100"/><c:crosses val="autoZero"/><c:auto val="1"/><c:lblAlgn val="ctr"/><c:lblOffset val="100"/><c:noMultiLvlLbl val="0"/></c:catAx><c:valAx><c:axId val="100"/><c:scaling><c:orientation val="minMax"/>${scale}</c:scaling><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines><c:spPr><a:ln><a:solidFill><a:srgbClr val="DFE3E6"/></a:solidFill></a:ln></c:spPr></c:majorGridlines><c:numFmt formatCode="${esc(axFmt)}" sourceLinked="0"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="10"/><c:crosses val="autoZero"/><c:crossBetween val="between"/></c:valAx></c:plotArea><c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/></c:chart></c:chartSpace>`;
 }
 function drawingXml() {
   const anc = (r0, r1, id) => `<xdr:twoCellAnchor editAs="oneCell"><xdr:from><xdr:col>15</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${r0}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:to><xdr:col>25</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${r1}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to><xdr:graphicFrame macro=""><xdr:nvGraphicFramePr><xdr:cNvPr id="${id + 1}" name="Chart ${id}"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr><xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="rIdCh${id}"/></a:graphicData></a:graphic></xdr:graphicFrame><xdr:clientData/></xdr:twoCellAnchor>`;
@@ -1399,7 +1403,8 @@ async function downloadMonth(month) {
     const f = $('#dlInfo') && $('#dlInfo').files[0];
     let info = null;
     if (f) { try { info = await readInfoFile(f); } catch (e) { throw new Error('인적사항 파일을 읽지 못했습니다: ' + e.message); } }
-    const blob = await buildWorkbook(month, d.items, d.list, d.order, hist, info);
+    const side = !$('#dlSide') || $('#dlSide').checked;
+    const blob = await buildWorkbook(month, d.items, d.list, d.order, hist, info, { side });
     if (info) { const hit = d.list.filter(x => info[x.person.name.replace(/\s+/g, '')]).length; toast(`인적사항 ${hit}/${d.list.length}명 채움`); }
     const [y, m] = month.split('-');
     saveBlob(blob, `인사평가_${y.slice(2)}년${+m}월.xlsx`);
