@@ -1309,6 +1309,12 @@ async function buildWorkbook(month, items, list, order, hist, info, opts) {
       c.numFmt = (i === 0 && j === 4) ? '0.0%' : (i === 0 && (j === 0 || j === 2)) ? '0.00' : '0;-0;"-"';
     }));
 
+    // 바깥 테두리 굵게 통일 (인적사항 1~5행, 평가표 7행~총평 끝)
+    const setB = (r, c, k) => { const cell = ws.getCell(r, c); cell.border = Object.assign({}, cell.border, { [k]: med }); };
+    [[1, 5], [7, 26 + d]].forEach(([a, b]) => {
+      for (let r = a; r <= b; r++) { setB(r, 2, 'left'); setB(r, 14, 'right'); }
+      for (let c = 2; c <= 14; c++) { setB(a, c, 'top'); setB(b, c, 'bottom'); }
+    });
     if (side) chartJobs.push({ name, r18: 18 + d, r19: 19 + d, r21: 21 + d });
   });
   wb.removeWorksheet(tpl.id);
