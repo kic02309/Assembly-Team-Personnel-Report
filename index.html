@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>조립팀 인사평가</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root{
   --bg:#f4f6f8; --card:#fff; --line:#dfe3e6; --line2:#c9cfd4; --text:#1f2933; --sub:#5f6b76;
@@ -37,8 +39,8 @@ textarea{resize:vertical;min-height:54px}
 .card h3{font-size:14px;margin:14px 0 8px}
 .muted{color:var(--sub);font-size:12px}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.grid-eval{display:grid;grid-template-columns:230px minmax(0,1fr) 330px;gap:12px;align-items:start}
-@media (max-width:1150px){.grid-eval{grid-template-columns:200px minmax(0,1fr)}.side{grid-column:1/-1}}
+.grid-eval{display:grid;grid-template-columns:410px minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:1150px){.grid-eval{grid-template-columns:1fr}}
 @media (max-width:760px){.grid-eval{grid-template-columns:1fr}}
 .plist{max-height:calc(100vh - 150px);overflow:auto;padding:6px}
 .pitem{display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:6px;cursor:pointer;border:1px solid transparent}
@@ -93,7 +95,7 @@ th{background:var(--gray-l);font-weight:700;font-size:13px}
 .edit input:focus,.edit select:focus{border-color:var(--blue)}
 .edit tr:hover td{background:#fafbfc}
 .scroll{overflow:auto}
-.tag{display:inline-block;font-size:11px;padding:0 6px;border-radius:4px;background:#eceff1;color:var(--sub)}
+.tag{display:inline-block;white-space:nowrap;font-size:11px;padding:0 6px;border-radius:4px;background:#eceff1;color:var(--sub)}
 .hist details{border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:#fff}
 .hist summary{padding:9px 12px;cursor:pointer;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .hist .body{padding:0 12px 12px}
@@ -110,6 +112,125 @@ th{background:var(--gray-l);font-weight:700;font-size:13px}
 .pv .or{background:#ffc000}
 .pv .bl{background:#bdd7ee}
 .pv svg{border:1px solid #d9d9d9;background:#fff;display:block}
+
+/* ===== 색상 개선 (역할별 색 구분) ===== */
+html,body{background:#e6eaef}
+.top{background:#1f3a5f;border-bottom:none;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.top h1{color:#fff}
+.top .muted{color:#c9d6e6}
+.tabs button{color:#c9d6e6}
+.tabs button:hover{background:rgba(255,255,255,.10);color:#fff}
+.tabs button.on{background:#fff;color:#1f3a5f}
+.top select{width:auto;border-color:#fff}
+.top .badge{background:#fff3c4;color:#6b4e00}
+.top #logoutBtn{background:transparent;color:#fff;border-color:#8fa6c1}
+.card{border-color:#d3d9df;box-shadow:0 1px 3px rgba(20,40,60,.06)}
+th{background:#e2efda;color:#274e13}
+.score td.inp{background:#fff8d6}
+.score input{background:#fffdf0;border-color:#e0c25a}
+.score input:focus{outline:2px solid #e0a000;background:#fff}
+.score td.ref{background:#eaf3fc}
+.score .ref b{font-size:17px}
+.score tr.minus td{background:#ddebf7}
+.score tr.minus td.inp{background:#fff1c6}
+.score tr.diff td.inp{background:#ffe8a3}
+.score tr.diff input{border-color:#d08a00;background:#fff4d0}
+.badge{font-weight:700}
+.badge.done{background:#c8e6c9;color:#1b5e20}
+.badge.draft{background:#ffe0b2;color:#b34700}
+.badge.none{background:#ffd6d6;color:#b71c1c}
+.pitem{border-left:4px solid transparent}
+.pitem.on{background:#e3eefa;border-color:#b9d3ec;border-left-color:#1f6fb2}
+.total{background:#e7f0f9;border:1px solid #b9d3ec;border-radius:8px;padding:8px 14px}
+.total b{font-size:26px}
+.sect.c-blue,.sect.c-orange,.sect.c-red{display:inline-block;color:#fff;padding:2px 10px;border-radius:4px}
+.sect.c-blue{background:#1f6fb2}.sect.c-orange{background:#d1662b}.sect.c-red{background:#c62828}
+.kv.red span:first-child{color:#c62828;font-weight:700}
+.kv{background:#fff}
+.fields .ro{background:#eef1f4;font-weight:700}
+.memo input,.memo textarea{background:#fffdf0;border-color:#e0c25a}
+#fMgr{background-color:#fffdf0;border-color:#e0c25a}
+.actions.sticky{position:sticky;bottom:0;background:rgba(255,255,255,.96);margin:14px -14px -14px;padding:10px 14px;border-top:1px solid #d3d9df;border-radius:0 0 10px 10px;z-index:5}
+.login{border-top:6px solid #1f3a5f;box-shadow:0 4px 18px rgba(20,40,60,.12)}
+.banner.warn{border:1px solid #ffd08a}
+.banner.lock{border:1px solid #f1b3b3}
+.banner.info{border:1px solid #b9d3ec}
+
+/* ===== 가독성·초보자용 개선 v2 ===== */
+html,body{font-size:15px;color:#111}
+.muted{color:#4a5561;font-size:13px}
+.card h2{font-size:17px}
+th{font-size:14px}
+.score td{font-size:14px}
+.score .why{color:#3d4852;font-size:12.5px}
+.kv div{font-size:14px}
+/* 버튼: 색이 채워진 네모 = 누르는 것 */
+button{background:#e7f0f9;border:1.5px solid #1f6fb2;color:#174e7c;font-weight:700;border-radius:7px;padding:8px 14px;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+button:hover{background:#d3e4f5}
+button:active{transform:translateY(1px)}
+button.primary{background:#1f6fb2;border-color:#1f6fb2;color:#fff}
+button.primary:hover{background:#185c95}
+button.green{background:#2e7d32;border-color:#2e7d32;color:#fff;font-size:16px;padding:10px 22px}
+button.green:hover{background:#256628}
+#saveDraft{font-size:16px;padding:10px 22px}
+button.danger{background:#fff;border-color:#c62828;color:#c62828}
+button.danger:hover{background:#fdecea}
+button.small{padding:4px 10px;font-size:13px}
+button:disabled{background:#e0e0e0;border-color:#bdbdbd;color:#888;box-shadow:none}
+/* 드롭다운: 흰 바탕 + 오른쪽 ▼ 표시 */
+select{appearance:none;-webkit-appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231f3a5f' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 10px center;
+  padding-right:32px!important;border:1.5px solid #8a96a3;border-radius:7px;font-weight:600;cursor:pointer}
+select:hover{border-color:#1f6fb2}
+.edit select{border:1px solid #c9cfd4}
+/* 상단 메뉴: 버튼처럼 보이게 */
+.top .wrap{padding:10px 16px}
+.tabs{gap:6px}
+.tabs button{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.35);color:#fff;font-weight:600;padding:7px 14px;box-shadow:none}
+.tabs button:hover{background:rgba(255,255,255,.2);color:#fff}
+.tabs button.on{background:#ffd54f;border-color:#ffd54f;color:#1f3a5f;font-weight:800}
+.top .muted{color:#fff;font-weight:700;font-size:14px}
+.top select{background-color:#fff;border-color:#fff;color:#1f3a5f;font-weight:800}
+.top #logoutBtn{background:transparent;color:#fff;border:1.5px solid #fff}
+/* 사용 순서 안내 */
+.steps{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.steps div{background:#fff;border:1px solid #c9d6e6;border-radius:8px;padding:7px 12px;font-size:14px}
+.steps b{display:inline-block;background:#1f3a5f;color:#fff;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;margin-right:6px;font-size:13px}
+.plist .ph{font-weight:800;padding:4px 8px 8px;color:#1f3a5f;border-bottom:1px solid #d3d9df;margin-bottom:6px}
+.pitem .nm{font-size:15px}
+.login select,.login input{font-size:16px;padding:10px 12px}
+.login .primary{font-size:17px;padding:12px}
+
+/* ===== 요약 목록 · 업무데이터 띠 · 평가요소 한 줄 ===== */
+.plist{padding:10px}
+table.sum{font-size:14px}
+table.sum th{padding:6px 4px;font-size:13px}
+table.sum td{padding:7px 5px;border-color:#e3e7ea}
+table.sum td.c{text-align:center;white-space:nowrap}
+table.sum td.nm{font-weight:700;white-space:nowrap}
+table.sum td.sc{font-weight:800;color:#1f6fb2;font-size:15px}
+table.sum td.low{color:#c62828;font-weight:700}
+table.sum tbody tr{cursor:pointer}
+table.sum tbody tr:hover td{background:#f3f7fb}
+table.sum tbody tr.on td{background:#e3eefa}
+table.sum tbody tr.on td:first-child{box-shadow:inset 4px 0 0 #1f6fb2}
+table.sum tfoot td{background:#f2f4f6;font-weight:700}
+table.strip td{padding:5px 8px;font-size:13.5px;border-color:#dfe3e6}
+table.strip td.k{background:#f2f2f2;font-weight:700;white-space:nowrap;color:#333}
+table.strip tr.red td.k{color:#c62828}
+table.strip td.v{font-weight:700;text-align:right;min-width:62px;white-space:nowrap}
+table.strip td.lab{color:#fff;font-weight:800;text-align:center;width:52px}
+table.strip td.lab.b{background:#1f6fb2}table.strip td.lab.o{background:#d1662b}table.strip td.lab.r{background:#c62828}
+.score .why{white-space:nowrap}
+.score td:nth-child(2){white-space:nowrap}
+.score td.ref{width:170px}
+#editor .card{overflow-x:auto}
+
+.savest{font-weight:700;font-size:14px;padding:4px 10px;border-radius:6px;background:#eef1f4;color:#4a5561;margin-right:auto}
+.savest.ok{background:#e8f5e9;color:#1b5e20}.savest.wait{background:#fff3e0;color:#b34700}.savest.err{background:#fdecea;color:#c62828}
+.sortsw{display:inline-flex;gap:0}
+.sortsw button{border-radius:0;box-shadow:none;background:#fff;color:#1f3a5f;border-color:#8a96a3}
+.sortsw button:first-child{border-radius:6px 0 0 6px}.sortsw button:last-child{border-radius:0 6px 6px 0;border-left:none}
+.sortsw button.on{background:#1f3a5f;color:#fff;border-color:#1f3a5f}
 @media print{.top,.no-print{display:none!important}.overlay{position:static;background:none;padding:0}.modal{box-shadow:none;padding:0}}
 </style>
 </head>
@@ -227,8 +348,8 @@ async function doLogin(auto) {
   }
 }
 
-function logout() {
-  if (STATE.dirty && !confirm('저장하지 않은 내용이 있습니다. 로그아웃할까요?')) return;
+async function logout() {
+  if (!(await guard())) return;
   try { sessionStorage.removeItem('auth'); } catch (e) {}
   location.reload();
 }
@@ -240,18 +361,41 @@ function buildMonthSel() {
   $('#monthSel').innerHTML = list.map(m => `<option value="${m}" ${m === STATE.month ? 'selected' : ''}>${m.replace('-', '년 ')}월${META.locks && META.locks[m] ? ' 🔒' : ''}</option>`).join('');
 }
 
-const TABS_ADMIN = [['overview', '현황'], ['eval', '평가 입력'], ['upload', '데이터 올리기'], ['config', '기준 설정'], ['roster', '명단·파트'], ['close', '마감·다운로드'], ['import', '기록 가져오기'], ['log', '수정기록']];
+const TABS_ADMIN = [['overview', '현황'], ['eval', '평가 입력'], ['upload', '데이터 올리기'], ['config', '기준 설정'], ['roster', '명단·파트'], ['order', '보고 순서표'], ['close', '마감·다운로드'], ['import', '기록 가져오기'], ['log', '수정기록']];
+const TABS_MANAGER = [['eval', '평가 입력'], ['mypart', '우리 파트 현황']];
 function buildTabs() {
   const t = $('#tabs');
-  t.innerHTML = AUTH.admin ? TABS_ADMIN.map(([k, v]) => `<button data-tab="${k}">${v}</button>`).join('') : '';
+  t.innerHTML = (AUTH.admin ? TABS_ADMIN : TABS_MANAGER).map(([k, v]) => `<button data-tab="${k}">${v}</button>`).join('');
   t.querySelectorAll('button').forEach(b => b.onclick = () => go(b.dataset.tab));
 }
 
-function go(tab) {
-  if (STATE.dirty && !confirm('저장하지 않은 내용이 있습니다. 이동할까요?')) return;
+async function go(tab) {
+  if (!(await guard())) return;
   STATE.dirty = false; STATE.tab = tab;
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  ({ overview: viewOverview, eval: viewEval, upload: viewUpload, config: viewConfig, roster: viewRoster, close: viewClose, import: viewImport, log: viewLog })[tab]();
+  const ADMIN_ONLY = ['overview', 'upload', 'config', 'roster', 'order', 'close', 'import', 'log'];
+  if (!AUTH.admin && ADMIN_ONLY.includes(tab)) tab = 'eval';
+  if (AUTH.admin && tab === 'mypart') tab = 'overview';
+  ({ overview: viewOverview, eval: viewEval, mypart: viewMyPart, upload: viewUpload, config: viewConfig, roster: viewRoster, order: viewOrder, close: viewClose, import: viewImport, log: viewLog })[tab]();
+}
+
+/* ---------- 이동 전 저장 확인 ---------- */
+function askSave() {
+  return new Promise(res => {
+    const o = document.createElement('div'); o.className = 'overlay';
+    o.innerHTML = `<div class="modal" style="max-width:440px;margin-top:18vh"><h2 style="margin:0 0 10px">저장하지 않은 내용이 있습니다</h2>
+      <div class="muted" style="font-size:14px;margin-bottom:16px">입력한 내용을 저장하고 이동할까요?</div>
+      <div class="actions" style="justify-content:flex-start"><button class="primary" data-a="save">저장하고 이동</button><button class="danger" data-a="discard">저장하지 않고 이동</button><button data-a="cancel">취소</button></div></div>`;
+    o.querySelectorAll('[data-a]').forEach(b => b.onclick = () => { o.remove(); res(b.dataset.a); });
+    document.body.appendChild(o);
+  });
+}
+async function guard() {
+  if (!STATE.dirty) return true;
+  const a = await askSave();
+  if (a === 'cancel') return false;
+  if (a === 'save') return await save(null, true);
+  STATE.dirty = false; clearTimeout(STATE.timer); return true;
 }
 
 /* =====================================================================
@@ -260,14 +404,14 @@ function go(tab) {
 async function viewEval(keepSel) {
   const main = $('#main');
   const partSel = AUTH.admin ? `<select id="partSel" style="width:auto">${META.parts.map(p => `<option ${p.name === STATE.part ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>` : `<b>${esc(STATE.part)}</b>`;
-  main.innerHTML = `<div class="row" style="margin-bottom:10px">${partSel}<span class="muted" id="evalSum"></span></div>
+  main.innerHTML = `<div class="steps"><div><b>1</b>왼쪽에서 이름 선택</div><div><b>2</b>[참고 점수 전체 적용] 누르기</div><div><b>3</b>점수 확인·수정 (노란 칸)</div><div><b>4</b>월간 총평 입력</div><div><b>5</b>[작성 완료] 누르기</div></div>
+    <div class="row" style="margin-bottom:10px">${AUTH.admin ? '<span style="font-weight:700">파트 선택</span>' : ''}${partSel}<span class="muted" id="evalSum"></span></div>
     <div id="evalBanner"></div>
     <div class="grid-eval">
       <div class="card plist" id="plist"></div>
       <div id="editor"><div class="card muted">왼쪽에서 인원을 선택하세요.</div></div>
-      <div class="side" id="side"></div>
     </div>`;
-  if (AUTH.admin) $('#partSel').onchange = e => { if (STATE.dirty && !confirm('저장하지 않은 내용이 있습니다. 이동할까요?')) { e.target.value = STATE.part; return; } STATE.dirty = false; STATE.part = e.target.value; STATE.sel = null; viewEval(); };
+  if (AUTH.admin) $('#partSel').onchange = async e => { const v = e.target.value; e.target.value = STATE.part; if (!(await guard())) return; STATE.dirty = false; STATE.part = v; STATE.sel = null; viewEval(); };
   try {
     STATE.data = await api('getPart', { month: STATE.month, part: STATE.part });
   } catch (e) { toast(e.message, 1); return; }
@@ -275,9 +419,21 @@ async function viewEval(keepSel) {
   const locked = d.locked && !AUTH.admin;
   $('#evalBanner').innerHTML = (d.locked ? `<div class="banner lock">🔒 ${d.month} 은(는) 마감되었습니다. ${AUTH.admin ? '관리자는 수정할 수 있습니다.' : '수정이 필요하면 관리자에게 요청하세요.'}</div>` : '') +
     (!d.list.some(x => x.data.hasData) ? `<div class="banner warn">이 달의 업무데이터가 아직 올라오지 않았습니다. 참고 점수가 비어 있어도 직접 입력은 가능합니다.</div>` : '');
+  d.list.sort((a, b) => cmpPeople(a, b));
   renderPList();
   if (keepSel && STATE.sel) selectPerson(STATE.sel, true);
   else if (d.list.length) selectPerson(d.list[0].person.name, true);
+}
+
+/* ---------- 정렬: 파트장 먼저 → 가나다순 / 입사순 ---------- */
+function getSortMode() { try { return localStorage.getItem('sortMode') || 'name'; } catch (e) { return 'name'; } }
+function setSortMode(m) { try { localStorage.setItem('sortMode', m); } catch (e) {} }
+function cmpPeople(a, b, mode) {
+  const pa = a.person, pb = b.person;
+  const la = pa.role === '파트장' ? 0 : 1, lb = pb.role === '파트장' ? 0 : 1;
+  if (la !== lb) return la - lb;
+  if ((mode || getSortMode()) === 'join') { const ja = pa.join || '9999', jb = pb.join || '9999'; if (ja !== jb) return ja < jb ? -1 : 1; }
+  return pa.name.localeCompare(pb.name, 'ko');
 }
 
 function recTotal(x) { return x.rec && x.rec['합계'] !== '' ? x.rec['합계'] : null; }
@@ -286,17 +442,29 @@ function renderPList() {
   const d = STATE.data;
   const done = d.list.filter(x => x.rec && x.rec['상태'] === '완료').length;
   $('#evalSum').textContent = `${d.month} · ${d.list.length}명 중 완료 ${done}명`;
-  $('#plist').innerHTML = d.list.map(x => {
+  const rows = d.list.map(x => {
     const st = x.rec ? x.rec['상태'] : '';
-    const b = st === '완료' ? '<span class="badge done">완료</span>' : st ? '<span class="badge draft">작성중</span>' : '<span class="badge">미작성</span>';
-    const t = recTotal(x);
-    return `<div class="pitem ${x.person.name === STATE.sel ? 'on' : ''}" data-n="${esc(x.person.name)}">
-      <span class="nm">${esc(x.person.name)}</span>
-      ${x.person.role === '파트장' ? '<span class="badge lead">파트장</span>' : ''}
-      <span class="muted">${esc(x.person.grade || '-')}</span>
-      ${t !== null ? `<span class="muted">${t}점</span>` : ''}${b}</div>`;
-  }).join('') || '<div class="muted">인원이 없습니다. 관리자 → 명단에서 파트를 확인하세요.</div>';
-  $('#plist').querySelectorAll('.pitem').forEach(el => el.onclick = () => selectPerson(el.dataset.n));
+    const b = st === '완료' ? '<span class="badge done">완료</span>' : st ? '<span class="badge draft">작성중</span>' : '<span class="badge none">미작성</span>';
+    const t = recTotal(x), dt = x.data;
+    const low = dt.달성률 !== null && dt.달성률 < 1;
+    return `<tr class="${x.person.name === STATE.sel ? 'on' : ''}" data-n="${esc(x.person.name)}">
+      <td class="nm">${esc(x.person.name)}${x.person.role === '파트장' ? ' <span class="badge lead">파트장</span>' : ''}</td>
+      <td class="c">${esc(x.person.grade || '-')}</td>
+      <td class="c sc">${t !== null ? t : '-'}</td>
+      <td class="c ${low ? 'low' : ''}">${dt.일평균 === null ? '-' : f1(dt.일평균) + '대'}</td>
+      <td class="c ${low ? 'low' : ''}">${dt.달성률 === null ? '-' : Math.round(dt.달성률 * 100) + '%'}</td>
+      <td class="c">${b}</td></tr>`;
+  }).join('');
+  const sc = d.list.map(recTotal).filter(v => v !== null).map(Number);
+  const av = d.list.map(x => x.data.일평균).filter(v => v !== null);
+  const avg = a => a.length ? a.reduce((p, q) => p + q, 0) / a.length : null;
+  const sm = getSortMode();
+  $('#plist').innerHTML = `<div class="ph row" style="justify-content:space-between">인원 선택 <span class="sortsw"><button class="small ${sm === 'name' ? 'on' : ''}" data-sort="name">가나다순</button><button class="small ${sm === 'join' ? 'on' : ''}" data-sort="join">입사순</button></span></div>
+    <table class="sum"><thead><tr><th>이름</th><th>등급</th><th>점수</th><th>일평균</th><th>달성률</th><th>상태</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="6" class="muted">인원이 없습니다.</td></tr>'}</tbody>
+    <tfoot><tr><td>파트 평균</td><td></td><td class="c">${sc.length ? f1(avg(sc)) : '-'}</td><td class="c">${av.length ? f1(avg(av)) + '대' : '-'}</td><td></td><td class="c">${done}/${d.list.length}</td></tr></tfoot></table>`;
+  $('#plist').querySelectorAll('tbody tr[data-n]').forEach(el => el.onclick = () => selectPerson(el.dataset.n));
+  $('#plist').querySelectorAll('[data-sort]').forEach(b => b.onclick = () => { setSortMode(b.dataset.sort); d.list.sort((p, q) => cmpPeople(p, q)); renderPList(); });
 }
 
 function curPerson() { return STATE.data.list.find(x => x.person.name === STATE.sel); }
@@ -304,10 +472,10 @@ function usedItems(items, person) {
   return items.filter(it => it.use && (it.target === '전체' || it.target === person.role));
 }
 
-function selectPerson(name, force) {
-  if (!force && STATE.dirty && !confirm('저장하지 않은 내용이 있습니다. 다른 인원으로 이동할까요?')) return;
-  STATE.dirty = false; STATE.sel = name;
-  document.querySelectorAll('.pitem').forEach(el => el.classList.toggle('on', el.dataset.n === name));
+async function selectPerson(name, force) {
+  if (!force && name !== STATE.sel && !(await guard())) return;
+  STATE.dirty = false; clearTimeout(STATE.timer); STATE.sel = name;
+  document.querySelectorAll('#plist tr[data-n]').forEach(el => el.classList.toggle('on', el.dataset.n === name));
   const x = curPerson(); if (!x) return;
   const d = STATE.data, p = x.person, rec = x.rec || {};
   const items = usedItems(d.items, p);
@@ -319,12 +487,12 @@ function selectPerson(name, force) {
     const k = it.no - 1, ref = x.refs[k], note = x.notes[k] || '';
     const val = rec['점수' + it.no] !== undefined && rec['점수' + it.no] !== '' ? rec['점수' + it.no] : '';
     const isMinus = it.sign < 0;
-    return `<tr data-no="${it.no}">
-      <td class="muted" style="width:70px">${esc(it.group)}</td>
+    return `<tr data-no="${it.no}" class="${isMinus ? 'minus' : ''}">
+      <td class="muted" style="width:84px;white-space:nowrap">${esc(it.group)}</td>
       <td><b>${esc(it.name)}</b><div class="why">${esc(it.desc)}</div></td>
       <td style="width:58px;text-align:center">${isMinus ? '<span class="tag">감점</span>' : esc(it.max) + '점'}</td>
-      <td style="width:96px;text-align:center"><input type="number" step="0.5" min="0" data-no="${it.no}" value="${esc(val)}" ${locked ? 'disabled' : ''} placeholder="${isMinus ? '감점' : '점수'}"></td>
-      <td class="ref" style="width:210px">${ref === null ? '<span class="muted">참고 없음</span>' : `<b>${isMinus && ref ? '-' : ''}${ref}</b>${isMinus ? '' : '점'} <button class="small" data-apply="${it.no}" ${locked ? 'disabled' : ''}>적용</button>`}<div class="why">${esc(note)}</div></td>
+      <td class="inp" style="width:96px;text-align:center"><input type="number" step="0.5" min="0" inputmode="decimal" data-no="${it.no}" value="${esc(val)}" ${locked ? 'disabled' : ''} placeholder="${isMinus ? '감점' : '점수'}"></td>
+      <td class="ref" style="width:210px">${ref === null ? '<span class="muted">참고 없음</span>' : `<b>${isMinus && ref ? '-' : ''}${ref}</b>${isMinus ? '' : '점'} <button class="small" data-apply="${it.no}" ${locked ? 'disabled' : ''}>이 점수 넣기</button>`}<div class="why">${esc(note)}</div></td>
     </tr>`;
   }).join('');
   $('#editor').innerHTML = `<div class="card">
@@ -336,6 +504,7 @@ function selectPerson(name, force) {
       <div class="row"><button id="histBtn">지난 기록</button><button id="pvBtn">미리보기</button></div>
     </div>
     ${rec['저장시각'] ? `<div class="muted" style="margin:4px 0 0">마지막 저장 ${esc(rec['저장시각'])} · ${esc(rec['작성자'])}</div>` : ''}
+    <div id="side"></div>
     <div class="row" style="justify-content:space-between;margin:12px 0 6px">
       <div class="sect" style="margin:0">인사평가 점수</div>
       <button class="small primary" id="applyAll" ${locked ? 'disabled' : ''}>참고 점수 전체 적용</button>
@@ -350,23 +519,23 @@ function selectPerson(name, force) {
       <div><label>달성률</label><div class="ro">${pct(x.data.달성률)}</div></div>
     </div>
     <div class="memo">
-      <label>업무평가 (1줄)</label><input type="text" id="fW1" value="${esc(rec['업무평가1'])}" ${locked ? 'disabled' : ''}>
+      <label>업무평가 (1줄)</label><input type="text" id="fW1" placeholder="여기에 입력" value="${esc(rec['업무평가1'])}" ${locked ? 'disabled' : ''}>
       <label>업무평가 (2줄)</label><input type="text" id="fW2" value="${esc(rec['업무평가2'])}" ${locked ? 'disabled' : ''}>
-      <label>건강관리</label><textarea id="fH" ${locked ? 'disabled' : ''}>${esc(rec['건강관리'])}</textarea>
-      <label>특이사항</label><textarea id="fS" ${locked ? 'disabled' : ''}>${esc(rec['특이사항'])}</textarea>
+      <label>건강관리</label><textarea id="fH" placeholder="여기에 입력" ${locked ? 'disabled' : ''}>${esc(rec['건강관리'])}</textarea>
+      <label>특이사항</label><textarea id="fS" placeholder="여기에 입력" ${locked ? 'disabled' : ''}>${esc(rec['특이사항'])}</textarea>
     </div>
-    <div class="actions">
-      <button id="saveDraft" ${locked ? 'disabled' : ''}>임시 저장</button>
+    <div class="actions sticky" style="align-items:center">
+      <span id="saveState" class="savest"></span><span class="muted">입력 후 30초가 지나면 자동 저장됩니다</span>
       <button class="green" id="saveDone" ${locked ? 'disabled' : ''}>작성 완료</button>
     </div></div>`;
   renderSide(x);
   const body = $('#scoreBody');
-  body.querySelectorAll('input').forEach(inp => inp.oninput = () => { STATE.dirty = true; updTotals(); });
-  body.querySelectorAll('[data-apply]').forEach(b => b.onclick = () => { const no = +b.dataset.apply; const inp = body.querySelector(`input[data-no="${no}"]`); inp.value = x.refs[no - 1]; STATE.dirty = true; updTotals(); });
-  $('#applyAll').onclick = () => { items.forEach(it => { const r = x.refs[it.no - 1]; if (r !== null) body.querySelector(`input[data-no="${it.no}"]`).value = r; }); STATE.dirty = true; updTotals(); toast('참고 점수를 넣었습니다. 확인 후 저장하세요'); };
-  ['#fMgr', '#fW1', '#fW2', '#fH', '#fS'].forEach(s => $(s).addEventListener('input', () => STATE.dirty = true));
-  $('#saveDraft').onclick = () => save('작성중');
+  body.querySelectorAll('input').forEach(inp => inp.oninput = () => { touch(); updTotals(); });
+  body.querySelectorAll('[data-apply]').forEach(b => b.onclick = () => { const no = +b.dataset.apply; const inp = body.querySelector(`input[data-no="${no}"]`); inp.value = x.refs[no - 1]; touch(); updTotals(); });
+  $('#applyAll').onclick = () => { items.forEach(it => { const r = x.refs[it.no - 1]; if (r !== null) body.querySelector(`input[data-no="${it.no}"]`).value = r; }); touch(); updTotals(); toast('참고 점수를 넣었습니다. 확인 후 [작성 완료]를 누르세요'); };
+  ['#fMgr', '#fW1', '#fW2', '#fH', '#fS'].forEach(s => $(s).addEventListener('input', touch));
   $('#saveDone').onclick = () => save('완료');
+  setSaveState(rec['저장시각'] ? '저장됨 · ' + String(rec['저장시각']).slice(5, 16) : '아직 저장 안 됨', rec['저장시각'] ? 'ok' : '');
   $('#pvBtn').onclick = () => openPreview(x);
   $('#histBtn').onclick = () => openHistory(p.name);
   updTotals();
@@ -389,50 +558,64 @@ function updTotals() {
     tr.classList.toggle('diff', v !== null && ref !== null && v !== ref);
   });
   $('#totalVal').textContent = any ? (Math.round(t * 10) / 10) + '점' : '-';
+  const cell = document.querySelector('#plist tr.on .sc'); if (cell) cell.textContent = any ? Math.round(t * 10) / 10 : '-';
 }
 
-async function save(status) {
-  const x = curPerson(); if (!x) return;
+const AUTO_MS = 30000;
+function touch() {
+  if (STATE.data && STATE.data.locked && !AUTH.admin) return;
+  STATE.dirty = true; setSaveState('저장 안 됨 · 30초 뒤 자동 저장', 'wait');
+  clearTimeout(STATE.timer); STATE.timer = setTimeout(() => save(null, true), AUTO_MS);
+}
+function setSaveState(t, cls) { const el = $('#saveState'); if (el) { el.textContent = t; el.className = 'savest ' + (cls || ''); } }
+function hhmm() { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
+
+// status: '완료' = 작성 완료 버튼 / null = 자동 저장(기존 상태 유지, 없으면 작성중)
+async function save(status, auto) {
+  clearTimeout(STATE.timer);
+  const x = curPerson(); if (!x) return true;
   const items = usedItems(STATE.data.items, x.person);
   const sc = readScores();
   if (status === '완료') {
     const empty = items.filter(it => it.sign > 0 && num(sc[it.no - 1]) === null);
-    if (empty.length && !confirm(`비어 있는 점수가 있습니다: ${empty.map(i => i.name).join(', ')}\n그래도 작성 완료로 저장할까요?`)) return;
+    if (empty.length && !confirm(`비어 있는 점수가 있습니다: ${empty.map(i => i.name).join(', ')}\n그래도 작성 완료로 저장할까요?`)) return false;
   }
   for (const it of items) {
     const v = num(sc[it.no - 1]);
     const mx = num(it.maxv !== null ? it.maxv : it.max);
-    if (v !== null && v < 0) { toast(`${it.name}: 0 이상으로 입력하세요 (감점은 숫자만)`, 1); return; }
-    if (v !== null && it.sign > 0 && mx !== null && v > mx) { toast(`${it.name}: 최대 ${mx}점입니다`, 1); return; }
+    if (v !== null && v < 0) { toast(`${it.name}: 0 이상으로 입력하세요 (감점은 숫자만)`, 1); setSaveState('저장 안 됨 · 점수를 확인하세요', 'err'); return false; }
+    if (v !== null && it.sign > 0 && mx !== null && v > mx) { toast(`${it.name}: 최대 ${mx}점입니다`, 1); setSaveState('저장 안 됨 · 점수를 확인하세요', 'err'); return false; }
   }
+  const st = status || (x.rec && x.rec['상태']) || '작성중';
   const diffs = items.filter(it => { const v = num(sc[it.no - 1]), r = x.refs[it.no - 1]; return v !== null && r !== null && v !== r; });
+  setSaveState('저장 중…', 'wait');
   try {
     const r = await api('save', {
-      month: STATE.data.month, name: x.person.name, scores: sc, status,
+      month: STATE.data.month, name: x.person.name, scores: sc, status: st, auto: !!auto,
       fields: { 관리자: $('#fMgr').value, 업무평가1: $('#fW1').value, 업무평가2: $('#fW2').value, 건강관리: $('#fH').value, 특이사항: $('#fS').value }
-    });
+    }, auto);
     x.rec = r.saved; STATE.dirty = false;
-    renderPList(); selectPerson(x.person.name, true);
-    toast(status === '완료' ? `작성 완료 저장됨 (합계 ${r.total}점)${diffs.length ? ` · 참고와 다른 칸 ${diffs.length}개` : ''}` : '임시 저장됨');
-  } catch (e) { toast(e.message, 1); }
+    renderPList();
+    if (auto) { setSaveState('자동 저장됨 · ' + hhmm(), 'ok'); }
+    else {
+      selectPerson(x.person.name, true);
+      toast(`작성 완료 저장됨 (합계 ${r.total}점)${diffs.length ? ` · 참고와 다른 칸 ${diffs.length}개` : ''}`);
+    }
+    return true;
+  } catch (e) { toast(e.message, 1); setSaveState('저장 실패 · ' + e.message, 'err'); return false; }
 }
 
 function renderSide(x) {
   const d = x.data;
-  const kv = arr => `<div class="kv">${arr.map(([k, v]) => `<div><span>${k}</span><span>${v}</span></div>`).join('')}</div>`;
-  $('#side').innerHTML = `<div class="card">
-    <h2>업무데이터 <span class="muted">${esc(STATE.data.month)}</span></h2>
-    ${d.hasData ? '' : '<div class="banner warn">이 인원의 업무데이터가 없습니다</div>'}
-    <div class="sect">실적</div>${kv([
-      ['총수량', d.총수량 === null ? '-' : f1(d.총수량) + '대'], ['총수량순위', d.총수량순위 ? d.총수량순위 + '위' : '-'],
-      ['일평균', d.일평균 === null ? '-' : f1(d.일평균, 2) + '대'], ['평균순위', d.평균순위 ? d.평균순위 + '위' : '-'],
-      ['개인목표', d.개인목표 === null ? '-' : f1(d.개인목표) + '대'], ['달성률', pct(d.달성률)],
-      ['전월평균', d.전월평균 === null ? '-' : f1(d.전월평균, 2) + '대'], ['파트 내 순위', d.파트순위 ? d.파트순위 + ' / ' + d.파트인원 : '-']])}
-    <div class="sect">근태</div>${kv([
-      ['근무일수', dash(d.근무일수)], ['당일연차', dash(d.당일연차)], ['지각', dash(d.지각)], ['조퇴', dash(d.조퇴)], ['결근', dash(d.결근)], ['', '']])}
-    <div class="sect">사고</div>${kv([
-      ['품질지적', dash(d.품질지적)], ['지시불이행', dash(d.지시불이행)], ['미/오발송', dash(d.미오발송)], ['오조립', dash(d.오조립)], ['파손', dash(d.파손)], ['', '']])}
-  </div>`;
+  const cells = arr => arr.map(([k, v]) => k ? `<td class="k">${k}</td><td class="v">${v}</td>` : '<td class="k"></td><td class="v"></td>').join('');
+  $('#side').innerHTML = `<div class="sect" style="margin:12px 0 6px">업무데이터 <span class="muted">${esc(STATE.data.month)}</span>${d.hasData ? '' : ' <span class="badge none">이 인원의 업무데이터가 없습니다</span>'}</div>
+  <div class="scroll"><table class="strip">
+    <tr><td class="lab b" rowspan="2">실적</td>${cells([['총수량', d.총수량 === null ? '-' : f1(d.총수량) + '대'], ['총수량순위', d.총수량순위 ? d.총수량순위 + '위' : '-'],
+      ['일평균', d.일평균 === null ? '-' : f1(d.일평균, 2) + '대'], ['평균순위', d.평균순위 ? d.평균순위 + '위' : '-'], ['파트 내 순위', d.파트순위 ? d.파트순위 + ' / ' + d.파트인원 : '-']])}</tr>
+    <tr>${cells([['개인목표', d.개인목표 === null ? '-' : f1(d.개인목표) + '대'], ['달성률', pct(d.달성률)], ['전월평균', d.전월평균 === null ? '-' : f1(d.전월평균, 2) + '대'], ['', ''], ['', '']])}</tr>
+    <tr class="red"><td class="lab o">근태</td>${cells([['근무일수', dash(d.근무일수)], ['당일연차', dash(d.당일연차)], ['지각', dash(d.지각)], ['조퇴', dash(d.조퇴)], ['결근', dash(d.결근)]])}</tr>
+    <tr class="red"><td class="lab r">사고</td>${cells([['품질지적', dash(d.품질지적)], ['지시불이행', dash(d.지시불이행)], ['미/오발송', dash(d.미오발송)], ['오조립', dash(d.오조립)], ['파손', dash(d.파손)]])}</tr>
+  </table></div>`;
 }
 
 /* ---------- 지난 기록 ---------- */
@@ -568,6 +751,8 @@ async function viewOverview() {
   const parts = META.parts.map(p => p.name);
   const byPart = parts.map(pt => { const l = d.list.filter(x => x.person.part === pt); return { pt, n: l.length, done: l.filter(x => x.rec && x.rec['상태'] === '완료').length, draft: l.filter(x => x.rec && x.rec['상태'] === '작성중').length }; });
   const diffCount = x => { if (!x.rec) return 0; let c = 0; for (let i = 1; i <= SLOTS; i++) { const v = num(x.rec['점수' + i]), r = num(x.rec['참고' + i]); if (v !== null && r !== null && v !== r) c++; } return c; };
+  const pidx = p => { const i = parts.indexOf(p); return i < 0 ? 99 : i; };
+  d.list.sort((a, b) => (pidx(a.person.part) - pidx(b.person.part)) || cmpPeople(a, b));
   const noData = d.list.filter(x => !x.data.hasData).length;
   main.innerHTML = `
     <div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${d.month} 진행 현황 ${d.locked ? '<span class="badge">🔒 마감</span>' : ''}</h2>
@@ -585,7 +770,7 @@ async function viewOverview() {
     $('#ovTbl').innerHTML = `<tr><th>파트</th><th>이름</th><th>직책</th><th>등급</th><th>상태</th><th>합계</th><th>참고와 다른 칸</th><th>일평균</th><th>작성자</th><th>저장시각</th><th></th></tr>` +
       rows.map(x => { const st = x.rec ? x.rec['상태'] : '미작성', dc = diffCount(x); return `<tr>
         <td>${esc(x.person.part)}</td><td><b>${esc(x.person.name)}</b></td><td>${esc(x.person.role)}</td><td>${esc(x.person.grade || '-')}</td>
-        <td><span class="badge ${st === '완료' ? 'done' : st === '작성중' ? 'draft' : ''}">${st}</span></td>
+        <td><span class="badge ${st === '완료' ? 'done' : st === '작성중' ? 'draft' : 'none'}">${st}</span></td>
         <td style="text-align:center">${x.rec ? dash(x.rec['합계']) : '-'}</td>
         <td style="text-align:center;${dc ? 'background:#fff8e1;font-weight:700' : ''}">${dc || ''}</td>
         <td style="text-align:center">${x.data.일평균 === null ? '-' : f1(x.data.일평균, 2)}</td>
@@ -849,9 +1034,11 @@ function viewClose() {
     <table style="max-width:520px"><tr><th>평가월</th><th>상태</th><th></th></tr>
     ${(META.months || []).map(m => `<tr><td>${m}</td><td>${lk[m] ? '🔒 마감' : '열림'}</td><td><button class="small ${lk[m] ? '' : 'primary'}" data-lock="${m}" data-v="${lk[m] ? 0 : 1}">${lk[m] ? '마감 해제' : '마감하기'}</button></td></tr>`).join('')}</table></div>
   <div class="card"><h2>엑셀 다운로드</h2>
-    <div class="banner info">인사보고 엑셀(마스터)에 넣을 파일입니다. "데이터" 시트에 인원별 점수·총평·업무데이터가, "항목설정" 시트에 점수1~10이 어떤 항목인지가 들어갑니다. 받은 파일을 입력파일 폴더에 넣고 인사보고 파일에서 새로고침하세요.</div>
+    <div class="banner info">첫 시트 "인사평가현황"(보고 순서표 모양, 총점) + 인원별 "인사평가표" 시트(개선 양식에 웹 입력 내용 그대로, 1~12월 그래프 포함)가 들어갑니다. 가점은 받은 엑셀의 "미래성과평가" 칸에 적으면 총점에 자동 반영됩니다.</div>
     <div class="row"><select id="dlMonth" style="width:auto">${(META.months || []).map(m => `<option ${m === STATE.month ? 'selected' : ''}>${m}</option>`).join('')}</select>
-      <button class="primary" id="dlBtn">이 달 엑셀 받기</button><button id="dlAll">전체 기록 받기</button></div></div>`;
+      <button class="primary" id="dlBtn">이 달 엑셀 받기</button><button id="dlAll">전체 기록 받기</button></div>
+    <div style="margin-top:12px;padding:10px;border:1px dashed #8a96a3;border-radius:8px"><b>인적사항 파일 (선택)</b> <input type="file" id="dlInfo" accept=".xlsx,.xlsm" style="width:auto">
+      <div class="muted" style="margin-top:4px">9월 최종 파일(조립팀_인사평가.xlsm) 또는 지난달 받은 엑셀을 넣으면 사진·휴대폰·주소·결혼유무·가족사항·담당업무를 사람별 평가표에 채웁니다.<br>이 파일은 이 컴퓨터 브라우저 안에서만 읽고, 서버나 인터넷에 올리지 않습니다. 안 넣으면 인적사항은 빈칸입니다.</div></div></div>`;
   main.querySelectorAll('[data-lock]').forEach(b => b.onclick = async () => {
     const m = b.dataset.lock, v = b.dataset.v === '1';
     if (!confirm(`${m} 을(를) ${v ? '마감' : '마감 해제'}할까요?`)) return;
@@ -861,30 +1048,362 @@ function viewClose() {
   $('#dlAll').onclick = downloadAll;
 }
 
-async function downloadMonth(month) {
-  let d; try { d = await api('getAll', { month }); } catch (e) { toast(e.message, 1); return; }
-  const rows = d.list.map((x, i) => {
+function exportRows(month, list) {
+  const rd = (v, n) => v === null || v === undefined ? '' : Math.round(v * 10 ** n) / 10 ** n;
+  return list.map((x, i) => {
     const r = x.rec || {}, dt = x.data;
     const o = { No: i + 1, 이름: x.person.name, 파트: x.person.part, 직책: x.person.role, 등급: x.person.grade, 평가월: month };
     for (let k = 1; k <= SLOTS; k++) o['점수' + k] = r['점수' + k] === undefined ? '' : r['점수' + k];
     o.합계 = r['합계'] ?? '';
     o.관리자 = r['관리자'] || '';
-    o.월목표 = dt.개인목표 ?? ''; o.결과 = dt.일평균 === null ? '' : Math.round(dt.일평균 * 100) / 100; o.달성률 = dt.달성률 === null ? '' : Math.round(dt.달성률 * 1000) / 1000;
+    o.월목표 = dt.개인목표 ?? ''; o.결과 = rd(dt.일평균, 2); o.달성률 = rd(dt.달성률, 3);
     o.업무평가 = [r['업무평가1'], r['업무평가2']].filter(Boolean).join('\n'); o.건강관리 = r['건강관리'] || ''; o.특이사항 = r['특이사항'] || '';
-    const rd = (v, n) => v === null || v === undefined ? '' : Math.round(v * 10 ** n) / 10 ** n;
     o.총수량 = rd(dt.총수량, 1); o.총수량순위 = dt.총수량순위 ?? ''; o.일평균 = rd(dt.일평균, 2); o.평균순위 = dt.평균순위 ?? ''; o.개인목표 = dt.개인목표 ?? ''; o.전월평균 = rd(dt.전월평균, 2);
     ['근무일수', '당일연차', '지각', '조퇴', '결근', '품질지적', '지시불이행', '미오발송', '오조립', '파손'].forEach(k => o[k] = dt[k] ?? '');
     o.상태 = r['상태'] || '미작성';
     return o;
   });
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(rows, { header: EXPORT_COLS });
-  ws['!cols'] = EXPORT_COLS.map(h => ({ wch: ['업무평가', '건강관리', '특이사항'].includes(h) ? 40 : h.length < 4 ? 8 : 11 }));
-  XLSX.utils.book_append_sheet(wb, ws, '데이터');
-  const items = d.items.map(it => ({ 칸: '점수' + it.no, 사용: it.use ? 'Y' : 'N', 구분: it.group, 항목명: it.name, 배점: it.max, 합산: it.sign < 0 ? '빼기' : '더하기', 평가기준: it.desc }));
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(items), '항목설정');
+}
+
+// 보고 순서표 순서로 정렬 (순서표에 없는 인원은 파트 → 이름순으로 뒤에)
+function sortByOrder(list, order) {
+  const pos = {}; order.forEach((r, i) => { if (r['이름']) pos[String(r['이름']).replace(/\s+/g, '')] = i; });
+  const key = x => pos[x.person.name.replace(/\s+/g, '')];
+  return list.slice().sort((a, b) => { const ka = key(a), kb = key(b);
+    if (ka !== undefined && kb !== undefined) return ka - kb; if (ka !== undefined) return -1; if (kb !== undefined) return 1;
+    return a.person.part.localeCompare(b.person.part, 'ko') || a.person.name.localeCompare(b.person.name, 'ko'); });
+}
+
+// 인적사항 파일(9월 최종 파일 또는 지난달 받은 엑셀)에서 사람별 인적사항·사진 읽기 — 브라우저 안에서만 읽고 어디에도 올리지 않음
+async function readInfoFile(file) {
+  const ab = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(ab);
+  const xwb = XLSX.read(ab, { type: 'array', bookSheets: false });
+  const rd = async p => zip.file(p) ? zip.file(p).async('string') : '';
+  const wbXml = await rd('xl/workbook.xml'), wbRels = await rd('xl/_rels/workbook.xml.rels');
+  const unesc = s => s.replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  const resolve = (base, t) => { if (t.startsWith('/')) return t.slice(1); const parts = base.split('/'); parts.pop(); t.split('/').forEach(s => { if (s === '..') parts.pop(); else if (s !== '.') parts.push(s); }); return parts.join('/'); };
+  const relsOf = async p => { const x = await rd(p.replace(/([^/]+)$/, '_rels/$1.rels')); const o = {}; for (const m of x.matchAll(/<Relationship\b[^>]*>/g)) { const id = /Id="([^"]*)"/.exec(m[0]), tg = /Target="([^"]*)"/.exec(m[0]); if (id && tg) o[id[1]] = resolve(p, unesc(tg[1])); } return o; };
+  const wbR = await relsOf('xl/workbook.xml');
+  const sheetPath = {};
+  for (const m of wbXml.matchAll(/<sheet\b[^>]*>/g)) { const n = /name="([^"]*)"/.exec(m[0]), id = /r:id="([^"]*)"/.exec(m[0]); if (n && id && wbR[id[1]]) sheetPath[unesc(n[1])] = wbR[id[1]]; }
+  const nk = s => String(s || '').replace(/\s+/g, '');
+  const KEYS = { 연락처: 'phone', 휴대폰: 'phone', 주소: 'addr', 결혼유무: 'marry', 가족사항: 'family', 직무: 'job', 담당업무: 'job' };
+  const out = {};
+  for (const sn of xwb.SheetNames) {
+    const sh = xwb.Sheets[sn]; if (!sh) continue;
+    const v = a => { const c = sh[a]; return c ? (c.w !== undefined ? c.w : c.v) : ''; };
+    if (nk(v('D1')) !== '성명') continue;               // 인사평가표 양식 시트만
+    const name = nk(v('F1')); if (!name) continue;
+    const o = {};
+    for (let r = 1; r <= 5; r++) [['D', 'F'], ['J', 'L']].forEach(([lc, vc]) => { const k = KEYS[nk(v(lc + r))]; if (k && !o[k]) { const val = String(v(vc + r) || '').trim(); if (val) o[k] = val; } });
+    // 사진: B~C열 위쪽(1~5행)에 걸린 그림
+    try {
+      const sp = sheetPath[sn];
+      if (sp) {
+        const sx = await rd(sp), sr = await relsOf(sp);
+        const dm = /<drawing\b[^>]*r:id="([^"]*)"/.exec(sx);
+        if (dm && sr[dm[1]]) {
+          const dp = sr[dm[1]], dx = await rd(dp), dr = await relsOf(dp);
+          for (const a of dx.matchAll(/<(?:xdr:)?(?:twoCellAnchor|oneCellAnchor)\b[\s\S]*?<\/(?:xdr:)?(?:twoCellAnchor|oneCellAnchor)>/g)) {
+            const col = +(/<(?:xdr:)?col>(\d+)</.exec(a[0]) || [0, 99])[1], row = +(/<(?:xdr:)?row>(\d+)</.exec(a[0]) || [0, 99])[1];
+            const em = /r:embed="([^"]*)"/.exec(a[0]);
+            if (em && col >= 1 && col <= 2 && row <= 4 && dr[em[1]]) {
+              const ext = (dr[em[1]].split('.').pop() || '').toLowerCase().replace('jpg', 'jpeg');
+              if (['png', 'jpeg', 'gif'].includes(ext) && zip.file(dr[em[1]])) { o.photo = { ext, data: await zip.file(dr[em[1]]).async('uint8array') }; break; }
+            }
+          }
+        }
+      }
+    } catch (e) { /* 사진은 없어도 진행 */ }
+    out[name] = o;
+  }
+  return out;
+}
+
+// 엑셀 받기: 1) 인사평가현황(보고 순서표 모양, 총점)  2) 사람별 인사평가표(개선 양식, 값으로 채움 + 그래프 2개)
+async function buildWorkbook(month, items, list, order, hist, info) {
+  if (!window.ExcelJS || !window.JSZip) throw new Error('엑셀 기능을 불러오지 못했습니다. 새로고침(Ctrl+F5) 후 다시 시도하세요.');
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(Uint8Array.from(atob(TPL_B64), c => c.charCodeAt(0)).buffer);
+  const tpl = wb.getWorksheet('사원');
+  const font = { name: '굴림', size: 9 }, bold = { name: '굴림', size: 9, bold: true };
+  const thin = { style: 'thin' }, border = { top: thin, left: thin, bottom: thin, right: thin };
+  const center = { horizontal: 'center', vertical: 'middle', wrapText: true };
   const [y, m] = month.split('-');
-  XLSX.writeFile(wb, `인사평가_${y.slice(2)}년${+m}월.xlsx`);
+  const nk = s => String(s || '').replace(/\s+/g, '');
+  const recBy = {}; list.forEach(x => recBy[nk(x.person.name)] = x);
+  const ordBy = {}; (order || []).forEach(r => { if (r['이름']) ordBy[nk(r['이름'])] = r; });
+
+  // ---------- 1) 인사평가현황 ----------
+  if (order && order.length) {
+    const ws = wb.addWorksheet('인사평가현황', { views: [{ showGridLines: false }] });
+    ws.columns = [{ width: 12 }, { width: 8 }, { width: 10 }, { width: 11 }, { width: 11 }, { width: 8 }, { width: 3 },
+                  { width: 12 }, { width: 8 }, { width: 10 }, { width: 11 }, { width: 11 }, { width: 8 }];
+    ws.getCell('A1').value = `● 조립팀 인사평가현황(${y}년${m}월)`; ws.getCell('A1').font = { name: '굴림', size: 12, bold: true };
+    const heads = ['파트', '직급', '이름', '사번', '계약월', '총점'];
+    [1, 8].forEach(c0 => heads.forEach((h, i) => { const c = ws.getCell(3, c0 + i); c.value = h; c.font = bold; c.border = border; c.alignment = center; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2EFDA' } }; }));
+    const sides = { '왼쪽': [], '오른쪽': [] };
+    order.forEach(r => { const s = sides[r['위치']] || sides['왼쪽']; let b = s.find(q => q.name === r['블록']); if (!b) { b = { name: r['블록'], rows: [] }; s.push(b); } if (r['이름']) b.rows.push(r); });
+    let total = 0;
+    const draw = (blocks, c0) => {
+      let row = 4;
+      blocks.forEach(b => {
+        const n = Math.max(b.rows.length, 1);
+        ws.getCell(row, c0).value = `${b.name}\n(${b.rows.length}명)`;
+        if (n > 1) ws.mergeCells(row, c0, row + n - 1, c0);
+        for (let i = 0; i < n; i++) {
+          const r = b.rows[i] || {};
+          const x = r['이름'] ? recBy[nk(r['이름'])] : null;
+          const tot = x && x.rec && x.rec['합계'] !== '' && x.rec['합계'] !== undefined ? Number(x.rec['합계']) : '';
+          const vals = [null, r['직급'] || '', r['이름'] || '', r['사번'] ? (isFinite(r['사번']) ? Number(r['사번']) : r['사번']) : '', r['계약월'] ? new Date(r['계약월'] + 'T00:00:00') : '', tot];
+          for (let k = 0; k < 6; k++) {
+            const c = ws.getCell(row + i, c0 + k);
+            if (k > 0) c.value = vals[k];
+            c.font = k === 5 ? bold : font; c.border = border; c.alignment = center;
+            if (k === 4) c.numFmt = 'yyyy-mm-dd';
+          }
+          ws.getRow(row + i).height = 15;
+        }
+        ws.getCell(row, c0).font = bold;
+        total += b.rows.length;
+        row += n + 1;
+      });
+      return row;
+    };
+    draw(sides['왼쪽'], 1);
+    const end = draw(sides['오른쪽'], 8);
+    const tl = ws.getCell(end, 8), tv = ws.getCell(end, 10);
+    ws.mergeCells(end, 8, end + 1, 9); ws.mergeCells(end, 10, end + 1, 11);
+    tl.value = '조립팀 총원'; tv.value = total;
+    [tl, tv].forEach(c => { c.font = bold; c.alignment = center; });
+    for (let rr = end; rr <= end + 1; rr++) for (let cc = 8; cc <= 11; cc++) ws.getCell(rr, cc).border = border;
+    ws.pageSetup = { orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+  }
+
+  // ---------- 2) 사람별 인사평가표 ----------
+  const cp = o => o === undefined ? undefined : JSON.parse(JSON.stringify(o));
+  const tplMerges = (tpl.model.merges || []).map(String);
+  const parseR = a => { const mm = /^([A-Z]+)(\d+):([A-Z]+)(\d+)$/.exec(a); return mm && { c1: mm[1], r1: +mm[2], c2: mm[3], r2: +mm[4] }; };
+  const copyCell = (ws, tr, tc, r, c, keepVal) => {
+    const s = tpl.getCell(tr, tc), d = ws.getCell(r, c);
+    d.style = cp(s.style) || {};
+    if (keepVal && s.value !== null && s.value !== undefined && !(s.value && s.value.formula)) d.value = s.value;
+    return d;
+  };
+  const copyRow = (ws, tr, r, keepVal) => {
+    for (let c = 1; c <= 25; c++) copyCell(ws, tr, c, r, c, keepVal);
+    ws.getRow(r).height = tpl.getRow(tr).height;
+  };
+  const med = { style: 'medium' };
+  const used = new Set();
+  const sheetName = n => { let s = String(n).replace(/[\[\]:*?\/\\']/g, '').slice(0, 31) || '이름없음', k = s, i = 2; while (used.has(k)) k = s.slice(0, 28) + '_' + i++; used.add(k); return k; };
+  const monthsCols = monthCols(month);
+  const numOr = v => { const n = num(v); return n === null ? null : n; };
+  const chartJobs = [];
+
+  sortByOrder(list, order || []).forEach(x => {
+    const p = x.person, r = x.rec || {}, o = exportRows(month, [x])[0], ord = ordBy[nk(p.name)] || {};
+    const its = usedItems(items, p);
+    const plus = its.filter(it => it.sign > 0), minus = its.filter(it => it.sign < 0);
+    const nRows = plus.length + 1 + minus.length;          // 항목 + 가점 1줄
+    const d = nRows - 7;                                   // 원본 양식은 9~15행(7줄)
+    const name = sheetName(p.name);
+    const ws = wb.addWorksheet(name, { views: [{ showGridLines: false }] });
+    ws.pageSetup = cp(tpl.pageSetup); ws.pageSetup.printArea = undefined;
+    tpl.columns.forEach((col, i) => { const c = ws.getColumn(i + 1); c.width = col.width; if (col.hidden) c.hidden = true; });
+
+    // 1~8행: 인적사항·제목·머리줄
+    for (let tr = 1; tr <= 8; tr++) copyRow(ws, tr, tr, true);
+    // 항목 줄
+    let row = 9;
+    const groups = []; plus.forEach(it => { const g = groups.find(q => q.name === it.group); g ? g.items.push(it) : groups.push({ name: it.group, items: [it] }); });
+    const itemRow = (it, tr, isMinus) => {
+      copyRow(ws, tr, row, false);
+      if (!isMinus) { // 항목명 칸은 첫 줄(C9) 모양으로 통일
+        const cs = cp(tpl.getCell(9, 3).style) || {}; cs.border = { top: row === 9 ? med : thin, bottom: thin, left: thin, right: thin };
+        ws.getCell(row, 3).style = cs; ws.getCell(row, 4).style = cp(cs);
+      }
+      ws.mergeCells(row, 3, row, 4); ws.mergeCells(row, 6, row, 13);
+      ws.getCell(row, 3).value = it.name;
+      ws.getCell(row, 5).value = isMinus ? '감점' : (num(it.max) ?? it.max);
+      ws.getCell(row, 6).value = it.desc;
+      const v = num(r['점수' + it.no]);
+      ws.getCell(row, 14).value = v === null ? null : (isMinus ? -Math.abs(v) : v);
+      ws.getRow(row).height = 33;
+      row++;
+    };
+    groups.forEach(g => {
+      const r0 = row;
+      g.items.forEach((it, i) => itemRow(it, i === 0 ? 9 : 10, false));
+      for (let c = 2; c <= 14; c++) { const cell = ws.getCell(row - 1, c); cell.border = Object.assign({}, cell.border, { bottom: med }); }
+      ws.getCell(r0, 2).value = g.name; ws.getCell(r0, 2).style = Object.assign(cp(tpl.getCell(9, 2).style), { border: { left: med, right: thin, top: med, bottom: med } });
+      if (row - 1 > r0) ws.mergeCells(r0, 2, row - 1, 2);
+    });
+    // 가점 줄 (엑셀에서 직접 입력)
+    copyRow(ws, 14, row, false);
+    ws.mergeCells(row, 3, row, 4); ws.mergeCells(row, 6, row, 13);
+    ws.getCell(row, 2).value = '추가평가'; ws.getCell(row, 3).value = '미래성과평가'; ws.getCell(row, 5).value = '가점';
+    ws.getCell(row, 6).value = '신규 서비스 개발 및 개선, 업무 프로세스 개선, 업무 지식 공유 및 업데이트';
+    ws.getRow(row).height = 33; row++;
+    // 감점 줄
+    minus.forEach(it => { itemRow(it, 15, true); ws.getCell(row - 1, 2).value = it.group; });
+    const lastItem = row - 1;
+
+    // 16행 이후: 총점·이력·총평 (d줄만큼 밀어서 복사)
+    for (let tr = 16; tr <= 26; tr++) copyRow(ws, tr, tr + d, true);
+    tplMerges.forEach(a => { const q = parseR(a); if (!q) return; if (q.r2 <= 8) ws.mergeCells(a); else if (q.r1 >= 16) ws.mergeCells(`${q.c1}${q.r1 + d}:${q.c2}${q.r2 + d}`); });
+    // 데이터 확인(목록) L1, L4
+    ws.getCell('L1').dataValidation = { type: 'list', allowBlank: true, formulae: ['"정규직,계약직"'] };
+    ws.getCell('L4').dataValidation = { type: 'list', allowBlank: true, formulae: ['"기 혼,미 혼"'] };
+
+    // 인적사항 (개인정보는 웹에 없으므로 빈칸)
+    ws.getCell('F1').value = p.name;
+    ws.getCell('F2').value = p.role || '사원';
+    if (ord['계약월']) ws.getCell('F3').value = new Date(String(ord['계약월']).slice(0, 10) + 'T00:00:00');
+    ws.getCell('L1').value = ord['직급'] === '계약직' ? '계약직' : '정규직';
+    const pi = (info && info[nk(p.name)]) || null;
+    if (pi) {
+      if (pi.job) ws.getCell('L2').value = pi.job;
+      if (pi.phone) ws.getCell('L3').value = pi.phone;
+      if (pi.family) ws.getCell('F4').value = pi.family;
+      if (pi.marry) ws.getCell('L4').value = pi.marry;
+      if (pi.addr) ws.getCell('F5').value = pi.addr;
+      if (pi.photo) { const id = wb.addImage({ buffer: pi.photo.data, extension: pi.photo.ext }); ws.addImage(id, 'B1:C5'); }
+    }
+
+    // 총점 = 항목 합계 수식 (가점 넣으면 자동 반영)
+    const tot = num(r['합계']);
+    ws.getCell(16 + d, 14).value = { formula: `SUM(N9:N${lastItem})`, result: tot === null ? 0 : tot };
+
+    // 1~12월 이력
+    const h = (hist && hist[nk(p.name)]) || {};
+    monthsCols.forEach((mc, i) => {
+      let s = h[mc.key] ? numOr(h[mc.key][0]) : null, q = h[mc.key] ? numOr(h[mc.key][1]) : null;
+      if (mc.key === month) { s = tot; q = numOr(x.data.일평균); }
+      const cs = ws.getCell(19 + d, 3 + i), cq = ws.getCell(21 + d, 3 + i);
+      cs.value = s === null ? null : Math.round(s); cq.value = q === null ? null : Math.round(q * 10) / 10;
+      [cs, cq].forEach(c => { c.fill = mc.last ? { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } } : { type: 'pattern', pattern: 'none' }; });
+    });
+
+    // 월간 총평
+    const rr = 23 + d;
+    ws.getCell(rr, 3).value = r['관리자'] || null;
+    ws.getCell(rr + 1, 3).value = o.월목표 === '' ? null : Number(o.월목표);
+    ws.getCell(rr + 2, 3).value = o.결과 === '' ? null : Number(o.결과);
+    ws.getCell(rr + 3, 3).value = o.달성률 === '' ? null : Number(o.달성률);
+    ws.getCell(rr + 3, 3).numFmt = '0.0%';
+    ws.getCell(rr, 5).value = r['업무평가1'] || null;
+    ws.getCell(rr + 1, 5).value = r['업무평가2'] || null;
+    ws.getCell(rr + 2, 5).value = r['건강관리'] || null;
+    ws.getCell(rr + 3, 5).value = r['특이사항'] || null;
+
+    // 오른쪽 업무 데이터 (P~Y)
+    const blk = [[o.총수량, o.총수량순위, o.일평균, o.개인목표, o.달성률], [o.근무일수, o.당일연차, o.지각, o.조퇴, o.결근], [o.품질지적, o.지시불이행, o.미오발송, o.오조립, o.파손]];
+    blk.forEach((vals, i) => vals.forEach((v, j) => {
+      const c = ws.getCell(rr + i, 17 + 2 * j);
+      c.value = v === '' || v === null || v === undefined ? null : Number(v);
+      c.numFmt = (i === 0 && j === 4) ? '0.0%' : (i === 0 && (j === 0 || j === 2)) ? '0.00' : '0;-0;"-"';
+    }));
+
+    chartJobs.push({ name, r18: 18 + d, r19: 19 + d, r21: 21 + d });
+  });
+  wb.removeWorksheet(tpl.id);
+
+  const buf = await wb.xlsx.writeBuffer();
+  return addCharts(buf, chartJobs);
+}
+
+// ExcelJS는 그래프를 못 만들어서, 저장된 파일(zip)에 그래프 XML을 직접 넣음
+const CHART_NS = 'xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"';
+function chartXml(title, sheet, catRow, valRow, color, lblFmt, axFmt, scale) {
+  const q = "'" + sheet.replace(/'/g, "''") + "'";
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><c:chartSpace ${CHART_NS}><c:roundedCorners val="0"/><c:chart><c:title><c:tx><c:rich><a:bodyPr/><a:p><a:pPr><a:defRPr sz="1200" b="1"/></a:pPr><a:r><a:rPr lang="ko-KR" sz="1200" b="1"/><a:t>${esc(title)}</a:t></a:r></a:p></c:rich></c:tx><c:overlay val="0"/></c:title><c:autoTitleDeleted val="0"/><c:plotArea><c:layout/><c:lineChart><c:grouping val="standard"/><c:varyColors val="0"/><c:ser><c:idx val="0"/><c:order val="0"/><c:spPr><a:ln w="22000"><a:solidFill><a:srgbClr val="${color}"/></a:solidFill></a:ln></c:spPr><c:marker><c:symbol val="circle"/><c:size val="5"/><c:spPr><a:solidFill><a:srgbClr val="${color}"/></a:solidFill><a:ln><a:solidFill><a:srgbClr val="${color}"/></a:solidFill></a:ln></c:spPr></c:marker><c:dLbls><c:numFmt formatCode="${esc(lblFmt)}" sourceLinked="0"/><c:spPr><a:noFill/><a:ln><a:noFill/></a:ln></c:spPr><c:dLblPos val="t"/><c:showLegendKey val="0"/><c:showVal val="1"/><c:showCatName val="0"/><c:showSerName val="0"/><c:showPercent val="0"/><c:showBubbleSize val="0"/></c:dLbls><c:cat><c:numRef><c:f>${esc(q)}!$C$${catRow}:$N$${catRow}</c:f></c:numRef></c:cat><c:val><c:numRef><c:f>${esc(q)}!$C$${valRow}:$N$${valRow}</c:f></c:numRef></c:val><c:smooth val="0"/></c:ser><c:marker val="1"/><c:axId val="10"/><c:axId val="100"/></c:lineChart><c:catAx><c:axId val="10"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/><c:numFmt formatCode="0&quot;월&quot;" sourceLinked="0"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="100"/><c:crosses val="autoZero"/><c:auto val="1"/><c:lblAlgn val="ctr"/><c:lblOffset val="100"/><c:noMultiLvlLbl val="0"/></c:catAx><c:valAx><c:axId val="100"/><c:scaling><c:orientation val="minMax"/>${scale}</c:scaling><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines><c:spPr><a:ln><a:solidFill><a:srgbClr val="DFE3E6"/></a:solidFill></a:ln></c:spPr></c:majorGridlines><c:numFmt formatCode="${esc(axFmt)}" sourceLinked="0"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="10"/><c:crosses val="autoZero"/><c:crossBetween val="between"/></c:valAx></c:plotArea><c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/></c:chart></c:chartSpace>`;
+}
+function drawingXml() {
+  const anc = (r0, r1, id) => `<xdr:twoCellAnchor editAs="oneCell"><xdr:from><xdr:col>15</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${r0}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:to><xdr:col>25</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${r1}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to><xdr:graphicFrame macro=""><xdr:nvGraphicFramePr><xdr:cNvPr id="${id + 1}" name="Chart ${id}"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr><xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="rIdCh${id}"/></a:graphicData></a:graphic></xdr:graphicFrame><xdr:clientData/></xdr:twoCellAnchor>`;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${anc(0, 11, 1)}${anc(11, 22, 2)}</xdr:wsDr>`;
+}
+async function addCharts(buf, jobs) {
+  const zip = await JSZip.loadAsync(buf);
+  const wbXml = await zip.file('xl/workbook.xml').async('string');
+  const wbRels = await zip.file('xl/_rels/workbook.xml.rels').async('string');
+  let ct = await zip.file('[Content_Types].xml').async('string');
+  const unesc = s => s.replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  const sheetFile = {};
+  for (const mt of wbXml.matchAll(/<sheet [^>]*?name="([^"]*)"[^>]*?r:id="([^"]*)"/g)) {
+    const rel = new RegExp(`<Relationship[^>]*Id="${mt[2]}"[^>]*>`).exec(wbRels) || [''];
+    const tg = /Target="([^"]*)"/.exec(rel[0]);
+    if (tg) sheetFile[unesc(mt[1])] = 'xl/' + tg[1].replace(/^\/?xl\//, '');
+  }
+  let n = 0, add = '';
+  const EMPTY_RELS = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>';
+  const CHART_CT = 'application/vnd.openxmlformats-officedocument.drawingml.chart+xml';
+  for (const j of jobs) {
+    const sf = sheetFile[j.name]; if (!sf || !zip.file(sf)) continue;
+    n++;
+    const c1 = 2 * n - 1, c2 = 2 * n;
+    zip.file(`xl/charts/chart${c1}.xml`, chartXml('월별 평가점수', j.name, j.r18, j.r19, '1F6FB2', '0" 점"', '0"점"', '<c:max val="105"/><c:min val="50"/>'));
+    zip.file(`xl/charts/chart${c2}.xml`, chartXml('월별 평균수량', j.name, j.r18, j.r21, 'D1662B', '0.0" 대"', '0.0"대"', ''));
+    add += `<Override PartName="/xl/charts/chart${c1}.xml" ContentType="${CHART_CT}"/><Override PartName="/xl/charts/chart${c2}.xml" ContentType="${CHART_CT}"/>`;
+    const chartRels = `<Relationship Id="rIdCh1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart" Target="../charts/chart${c1}.xml"/><Relationship Id="rIdCh2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart" Target="../charts/chart${c2}.xml"/>`;
+    const relPath = sf.replace(/worksheets\/([^/]+)$/, 'worksheets/_rels/$1.rels');
+    let rels = zip.file(relPath) ? await zip.file(relPath).async('string') : EMPTY_RELS;
+    let sx = await zip.file(sf).async('string');
+    const exist = /<drawing\b[^>]*r:id="([^"]*)"/.exec(sx);
+    const rel = exist && new RegExp(`<Relationship\\b[^>]*Id="${exist[1]}"[^>]*>`).exec(rels);
+    const tg = rel && /Target="([^"]*)"/.exec(rel[0]);
+    if (tg) { // 사진 때문에 그림판이 이미 있으면 거기에 그래프를 붙임
+      const dp = tg[1].startsWith('/') ? tg[1].slice(1) : 'xl/' + tg[1].replace(/^\.\.\//, '');
+      const drp = dp.replace(/([^/]+)$/, '_rels/$1.rels');
+      let dx = await zip.file(dp).async('string');
+      const pre = (/<(\w+):wsDr\b/.exec(dx) || [0, 'xdr'])[1];
+      let anchors = /<xdr:wsDr[^>]*>([\s\S]*)<\/xdr:wsDr>/.exec(drawingXml())[1].replace(/cNvPr id="(\d)"/g, 'cNvPr id="100$1"');
+      if (pre !== 'xdr') anchors = anchors.replace(/<(\/?)xdr:/g, `<$1${pre}:`);
+            if (!/xmlns:a=/.test((/<\w+:wsDr\b[^>]*>/.exec(dx) || [''])[0])) dx = dx.replace(new RegExp(`<${pre}:wsDr\\b`), `<${pre}:wsDr xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"`);
+      dx = dx.replace(`</${pre}:wsDr>`, anchors + `</${pre}:wsDr>`);
+      zip.file(dp, dx);
+      const dr = zip.file(drp) ? await zip.file(drp).async('string') : EMPTY_RELS;
+      zip.file(drp, dr.replace('</Relationships>', chartRels + '</Relationships>'));
+      continue;
+    }
+    const dn = `xl/drawings/chartdrw${n}.xml`;
+    zip.file(dn, drawingXml());
+    zip.file(`xl/drawings/_rels/chartdrw${n}.xml.rels`, EMPTY_RELS.replace('</Relationships>', chartRels + '</Relationships>'));
+    zip.file(relPath, rels.replace('</Relationships>', `<Relationship Id="rIdChartDrw" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/chartdrw${n}.xml"/></Relationships>`));
+    if (!/xmlns:r=/.test(sx.slice(0, 600))) sx = sx.replace('<worksheet ', '<worksheet xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ');
+    const tags = ['<legacyDrawing', '<drawingHF', '<picture', '<oleObjects', '<controls', '<webPublishItems', '<tableParts', '<extLst', '</worksheet>'];
+    let at = -1; for (const t of tags) { const i = sx.indexOf(t); if (i >= 0 && (at < 0 || i < at)) at = i; }
+    zip.file(sf, sx.slice(0, at) + '<drawing r:id="rIdChartDrw"/>' + sx.slice(at));
+    add += `<Override PartName="/${dn}" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>`;
+  }
+  ct = ct.replace('</Types>', add + '</Types>');
+  zip.file('[Content_Types].xml', ct);
+  return zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', compression: 'DEFLATE' });
+}
+
+// 개선 양식(사원 인사평가표) 빈 틀 — 굴림·테두리·칸 크기 원본 그대로
+const TPL_B64 = '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';
+
+function saveBlob(blob, name) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+async function downloadMonth(month) {
+  let d; try { d = await api('getAll', { month }); } catch (e) { toast(e.message, 1); return; }
+  try {
+    busy(true);
+    const hist = await api('hist12', { month });
+    const f = $('#dlInfo') && $('#dlInfo').files[0];
+    let info = null;
+    if (f) { try { info = await readInfoFile(f); } catch (e) { throw new Error('인적사항 파일을 읽지 못했습니다: ' + e.message); } }
+    const blob = await buildWorkbook(month, d.items, d.list, d.order, hist, info);
+    if (info) { const hit = d.list.filter(x => info[x.person.name.replace(/\s+/g, '')]).length; toast(`인적사항 ${hit}/${d.list.length}명 채움`); }
+    const [y, m] = month.split('-');
+    saveBlob(blob, `인사평가_${y.slice(2)}년${+m}월.xlsx`);
+  } catch (e) { toast(e.message, 1); } finally { busy(false); }
 }
 
 async function downloadAll() {
@@ -895,12 +1414,65 @@ async function downloadAll() {
 }
 
 /* =====================================================================
+   매니저 — 우리 파트 현황
+   ===================================================================== */
+async function viewMyPart() {
+  const main = $('#main');
+  let d; try { d = await api('getPart', { month: STATE.month, part: STATE.part }); } catch (e) { toast(e.message, 1); return; }
+  d.list.sort((a, b) => cmpPeople(a, b));
+  const done = d.list.filter(x => x.rec && x.rec['상태'] === '완료').length;
+  main.innerHTML = `<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${esc(d.part)} · ${d.month} 현황 (${done} / ${d.list.length} 완료)</h2>
+    <button class="primary" id="myDl">우리 파트 엑셀 받기</button></div>
+    <div class="scroll" style="margin-top:10px"><table><tr><th>이름</th><th>직책</th><th>등급</th><th>상태</th>${usedItems(d.items, { role: '전체' }).map(it => `<th>${esc(it.name)}</th>`).join('')}<th>합계</th><th>일평균</th><th>달성률</th></tr>
+    ${d.list.map(x => { const r = x.rec || {}; const st = r['상태'] || '미작성'; const its = usedItems(d.items, x.person);
+      return `<tr><td><b>${esc(x.person.name)}</b></td><td>${esc(x.person.role)}</td><td style="text-align:center">${esc(x.person.grade || '-')}</td>
+      <td><span class="badge ${st === '완료' ? 'done' : st === '작성중' ? 'draft' : 'none'}">${st}</span></td>
+      ${usedItems(d.items, { role: '전체' }).map(it => `<td style="text-align:center">${its.find(q => q.no === it.no) ? dash(r['점수' + it.no]) : ''}</td>`).join('')}
+      <td style="text-align:center"><b>${dash(r['합계'])}</b></td><td style="text-align:center">${x.data.일평균 === null ? '-' : f1(x.data.일평균, 2)}</td><td style="text-align:center">${pct(x.data.달성률)}</td></tr>`; }).join('')}
+    </table></div></div>`;
+  $('#myDl').onclick = async () => {
+    try { busy(true); const hist = await api('hist12', { month: d.month }); const blob = await buildWorkbook(d.month, d.items, d.list, d.order, hist); const [y, m] = d.month.split('-'); saveBlob(blob, `인사평가_${d.part}_${y.slice(2)}년${+m}월.xlsx`); }
+    catch (e) { toast(e.message, 1); } finally { busy(false); }
+  };
+}
+
+/* =====================================================================
+   관리자 — 보고 순서표 (인사평가현황 엑셀의 파트별 인원 순서)
+   ===================================================================== */
+async function viewOrder() {
+  const main = $('#main');
+  main.innerHTML = '<div class="card muted">불러오는 중…</div>';
+  try { await loadCfg(); } catch (e) { toast(e.message, 1); return; }
+  const rows = CFG['보고순서'];
+  const inOrder = new Set(rows.filter(r => r['이름']).map(r => r['이름'].replace(/\s+/g, '')));
+  const missing = CFG['명단'].filter(r => r['사용'] !== 'N' && r['이름'] && !inOrder.has(r['이름'].replace(/\s+/g, ''))).map(r => r['이름']);
+  const blocks = [...new Set(rows.map(r => r['블록']).filter(Boolean))];
+  COL_OPTS['블록@보고순서'] = blocks; COL_OPTS['위치@보고순서'] = ['왼쪽', '오른쪽']; COL_OPTS['직급@보고순서'] = ['팀장', '매니저', '사원', '계약직', ''];
+  main.innerHTML = `<div class="card"><h2>보고 순서표 <span class="muted">— 엑셀 "인사평가현황" 시트의 파트별 인원 순서</span></h2>
+    <div class="banner info">웹의 파트 구성과는 별개로, 엑셀 다운로드용 순서만 정합니다. <b>저장하면 블록마다 팀장·매니저 → 파트장 → 계약월(입사) 빠른 순으로 자동 정렬</b>됩니다.<br>
+    인원 이동: 그 사람의 "블록"을 바꾸고 저장 · 신규 입사: [+ 줄 추가] 후 블록·직급·이름·사번·계약월(YYYY-MM-DD) 입력 · 퇴사: [삭제] 또는 블록을 "퇴사인원"으로.
+    새 블록은 블록 칸에 새 이름을 직접 적으면 됩니다(위치·블록순서도 입력).</div>
+    ${missing.length ? `<div class="banner warn">명단에는 있는데 순서표에 없는 인원: ${missing.map(esc).join(', ')} — 엑셀 현황 시트에 나오지 않고 데이터 시트 맨 뒤에 붙습니다.</div>` : ''}
+    ${editTable('보고순서', rows, { readonly: ['순서'], w: { 블록: 110, 위치: 60, 블록순서: 50, 순서: 40, 이름: 80, 사번: 90, 계약월: 95, 비고: 120 }, blank: { 위치: '왼쪽', 직급: '사원' } })}
+    <div class="actions"><button class="primary" id="svOrder">저장 (자동 정렬)</button></div></div>`;
+  // 블록 칸은 자유 입력도 되도록 datalist 사용
+  $('#ed_보고순서').querySelectorAll('select[data-h="블록"]').forEach(sel => {
+    const inp = document.createElement('input'); inp.type = 'text'; inp.dataset.h = '블록'; inp.value = sel.value; inp.setAttribute('list', 'blkList'); inp.style.width = '110px';
+    sel.replaceWith(inp);
+  });
+  main.insertAdjacentHTML('beforeend', `<datalist id="blkList">${blocks.map(b => `<option value="${esc(b)}">`).join('')}</datalist>`);
+  wireTable('보고순서', { readonly: ['순서'], blank: { 위치: '왼쪽', 직급: '사원' } });
+  $('#svOrder').onclick = async () => { if (await saveTable('보고순서', readTable('보고순서'))) viewOrder(); };
+}
+
+/* =====================================================================
    관리자 — 기록 가져오기 (9월까지 인사보고 파일)
    ===================================================================== */
 function viewImport() {
   const main = $('#main');
   main.innerHTML = `<div class="card"><h2>지난 기록 가져오기</h2>
     <div class="banner info">9월까지 쓰던 인사보고 엑셀(조립팀_인사평가.xlsm)의 "데이터_이력" 시트를 읽어서, 월별 총점·항목 점수·일평균·면담을 평가기록에 넣습니다. "구 기준"으로 표시되어 새 기준과 섞이지 않습니다. 이 기록이 있으면 10월 "전월평균"(성장 점수)과 1~12월 이력에 바로 쓰입니다.</div>
+    <div class="row" style="margin-bottom:10px"><b>가져올 기간</b><input type="text" id="imFrom" value="2025-10" style="width:110px"> ~ <input type="text" id="imTo" value="2026-09" style="width:110px"><span class="muted">(YYYY-MM)</span></div>
     <input type="file" id="imFile" accept=".xlsx,.xlsm">
     <label class="row" style="margin-top:10px"><input type="checkbox" id="imOver" style="width:auto"> 이미 있는 달·인원 기록도 덮어쓰기</label>
     <div id="imPrev" style="margin-top:12px"></div>
@@ -930,6 +1502,8 @@ function viewImport() {
         if (typeof o.평가월 === 'number') { const dt = new Date(Math.round((o.평가월 - 25569) * 86400000)); o.평가월 = `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}`; }
         rows.push(o);
       }
+      const mFrom = $('#imFrom').value.trim() || '0000-00', mTo = $('#imTo').value.trim() || '9999-99';
+      rows = rows.filter(r => r.평가월 >= mFrom && r.평가월 <= mTo);
       const byM = {}; rows.forEach(r => byM[r.평가월] = (byM[r.평가월] || 0) + 1);
       $('#imPrev').innerHTML = `<div class="banner info">${rows.length}줄 읽음</div><table style="max-width:420px"><tr><th>평가월</th><th>인원</th></tr>${Object.keys(byM).sort().map(m => `<tr><td>${esc(m)}</td><td>${byM[m]}</td></tr>`).join('')}</table>`;
       $('#imBtn').disabled = false;
@@ -961,9 +1535,10 @@ async function viewLog() {
 $('#loginBtn').onclick = () => doLogin(false);
 $('#loginPw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(false); });
 $('#logoutBtn').onclick = logout;
-$('#monthSel').onchange = e => {
-  if (STATE.dirty && !confirm('저장하지 않은 내용이 있습니다. 이동할까요?')) { e.target.value = STATE.month; return; }
-  STATE.dirty = false; STATE.month = e.target.value; STATE.sel = null; go(STATE.tab);
+$('#monthSel').onchange = async e => {
+  const v = e.target.value; e.target.value = STATE.month;
+  if (!(await guard())) return;
+  STATE.dirty = false; STATE.month = v; e.target.value = v; STATE.sel = null; go(STATE.tab);
 };
 window.addEventListener('beforeunload', e => { if (STATE.dirty) { e.preventDefault(); e.returnValue = ''; } });
 initLogin();
