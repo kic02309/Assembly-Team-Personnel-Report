@@ -267,6 +267,10 @@ table.edit select{padding-right:22px;background-position:right 6px center}
 table.edit input,table.edit select{text-align:center;text-align-last:center}
 table.edit th{text-align:center}
 table.edit td{text-align:center}
+input[type=month]{border:1px solid var(--line2);border-radius:6px;padding:5px 8px;background:#fff;width:100%;cursor:pointer;font:inherit;font-size:13px}
+input[type=month]:hover{border-color:#1f6fb2}
+/* 마감·현황·업무데이터·수정기록 표 가운데 정렬 */
+table.ctr td,#ovTbl td,table.strip td.k,table.strip td.v{text-align:center}
 table.edit textarea,table.edit input[data-h="평가기준"],table.edit input[data-h="설명"],table.edit input[data-h="비고"]{text-align:left;text-align-last:left}
 table.edit textarea{min-height:0;resize:vertical;line-height:1.35;overflow:hidden}
 .cfg-grid{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:14px;align-items:start}
@@ -884,7 +888,7 @@ function viewUpload() {
   main.innerHTML = `<div class="card"><h2>월간 데이터 올리기</h2>
     <div class="banner info">매달 한 번, 업무통계 엑셀과 사고 엑셀을 올리면 인원별 업무데이터와 참고 점수가 만들어집니다. 같은 달을 다시 올리면 그 달 데이터만 새로 바뀝니다. (입력한 점수는 그대로)</div>
     <div class="fields" style="grid-template-columns:160px 1fr 1fr">
-      <div><label>평가월 (YYYY-MM)</label><input type="text" id="upMonth" value="${esc(STATE.month)}"></div>
+      <div><label>평가월 (눌러서 선택)</label><input type="month" id="upMonth" value="${esc(STATE.month)}"></div>
       <div><label>① 업무통계 엑셀 (예: 업무통계 (조립팀).xlsx)</label><input type="file" id="upWork" accept=".xlsx,.xlsm,.xls"><select id="upWorkSheet" class="hidden" style="margin-top:6px"></select></div>
       <div><label>② 사고 엑셀 (선택, 예: 2026년 사고리스트.xlsx)</label><input type="file" id="upAcc" accept=".xlsx,.xlsm,.xls"><select id="upAccSheet" class="hidden" style="margin-top:6px"></select></div>
     </div>
@@ -1048,7 +1052,7 @@ async function viewConfig() {
   </div>
   <div class="card"><h2>기본 설정</h2>
     <div class="fields" style="grid-template-columns:160px 1fr 200px">
-      <div><label>현재 평가월 (YYYY-MM)</label><input type="text" id="stMonth" value="${esc(st['현재평가월'] || '')}"></div>
+      <div><label>현재 평가월 (눌러서 선택)</label><input type="month" id="stMonth" value="${esc(st['현재평가월'] || '')}"></div>
       <div><label>관리자 목록 (월간 총평 "관리자" 선택, 쉼표로 구분)</label><input type="text" id="stMgr" value="${esc(st['관리자명단'] || '')}"></div>
       <div><label>관리자 비밀번호</label><input type="password" id="stPw" value="${esc(st['관리자비밀번호'] || '')}"></div>
     </div><div class="actions"><button class="primary" id="svSet">저장</button></div></div>`;
@@ -1109,7 +1113,7 @@ function viewClose() {
   main.innerHTML = `
   <div class="card"><h2>월 마감</h2>
     <div class="muted" style="margin-bottom:8px">마감하면 매니저는 그 달 점수를 고칠 수 없고, 관리자만 고칠 수 있습니다. 필요하면 다시 풀 수 있습니다.</div>
-    <table style="max-width:520px"><tr><th>평가월</th><th>상태</th><th></th></tr>
+    <table class="ctr" style="max-width:520px"><tr><th>평가월</th><th>상태</th><th></th></tr>
     ${(META.months || []).map(m => `<tr><td>${m}</td><td>${lk[m] ? '🔒 마감' : '열림'}</td><td><button class="small ${lk[m] ? '' : 'primary'}" data-lock="${m}" data-v="${lk[m] ? 0 : 1}">${lk[m] ? '마감 해제' : '마감하기'}</button></td></tr>`).join('')}</table></div>
   <div class="card"><h2>엑셀 다운로드</h2>
     <div class="banner info">첫 시트 "인사평가현황"(보고 순서표 모양, 총점) + 인원별 "인사평가표" 시트(개선 양식에 웹 입력 내용 그대로, 1~12월 그래프 포함)가 들어갑니다. 가점은 받은 엑셀의 "미래성과평가" 칸에 적으면 총점에 자동 반영됩니다.</div>
@@ -1561,7 +1565,7 @@ function viewImport() {
   const main = $('#main');
   main.innerHTML = `<div class="card"><h2>지난 기록 가져오기</h2>
     <div class="banner info">9월까지 쓰던 인사보고 엑셀(조립팀_인사평가.xlsm)의 "데이터_이력" 시트를 읽어서, 월별 총점·항목 점수·일평균·면담을 평가기록에 넣습니다. "구 기준"으로 표시되어 새 기준과 섞이지 않습니다. 이 기록이 있으면 10월 "전월평균"(성장 점수)과 1~12월 이력에 바로 쓰입니다.</div>
-    <div class="row" style="margin-bottom:10px"><b>가져올 기간</b><input type="text" id="imFrom" value="2025-10" style="width:110px"> ~ <input type="text" id="imTo" value="2026-09" style="width:110px"><span class="muted">(YYYY-MM)</span></div>
+    <div class="row" style="margin-bottom:10px"><b>가져올 기간</b><input type="month" id="imFrom" value="2025-10" style="width:150px"> ~ <input type="month" id="imTo" value="2026-09" style="width:150px"><span class="muted">(눌러서 선택)</span></div>
     <input type="file" id="imFile" accept=".xlsx,.xlsm">
     <label class="row" style="margin-top:10px"><input type="checkbox" id="imOver" style="width:auto"> 이미 있는 달·인원 기록도 덮어쓰기</label>
     <div id="imPrev" style="margin-top:12px"></div>
@@ -1612,7 +1616,7 @@ function viewImport() {
 async function viewLog() {
   const main = $('#main');
   let l; try { l = await api('log', { month: STATE.month }); } catch (e) { toast(e.message, 1); return; }
-  main.innerHTML = `<div class="card"><h2>수정기록 · ${esc(STATE.month)} (최근 500건)</h2><div class="scroll"><table>
+  main.innerHTML = `<div class="card"><h2>수정기록 · ${esc(STATE.month)} (최근 500건)</h2><div class="scroll"><table class="ctr">
     <tr><th>시각</th><th>작성자</th><th>이름</th><th>칸</th><th>이전값</th><th>새값</th></tr>
     ${l.map(r => `<tr><td class="muted">${esc(r['시각'])}</td><td>${esc(r['작성자'])}</td><td>${esc(r['이름'])}</td><td>${esc(r['칸'])}</td><td>${esc(r['이전값'])}</td><td>${esc(r['새값'])}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">기록이 없습니다</td></tr>'}
   </table></div></div>`;
@@ -1621,6 +1625,8 @@ async function viewLog() {
 /* =====================================================================
    시작
    ===================================================================== */
+// 월 선택칸: 칸 아무 곳이나 눌러도 달력 열기
+document.addEventListener('click', e => { const t = e.target; if (t && t.matches && t.matches('input[type=month]') && t.showPicker) { try { t.showPicker(); } catch (er) {} } });
 $('#loginBtn').onclick = () => doLogin(false);
 $('#loginPw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(false); });
 $('#logoutBtn').onclick = logout;
